@@ -9,6 +9,7 @@ import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import za.co.sindi.ai.mcp.server.runtime.BeanDefinition;
 import za.co.sindi.ai.mcp.server.runtime.BeanDefinitionRegistry;
@@ -23,7 +24,7 @@ public class DefaultBeanDefinitionRegistry implements BeanDefinitionRegistry {
 	private List<BeanDefinition> beans;
 	
 	private DefaultBeanDefinitionRegistry(BeanDefinitionRegistryBuilder builder) {
-		beans = builder.instances.entrySet().stream().map(entry -> MCPFeatures.createBeanDefinition(entry.getKey(), entry.getValue())).toList(); 
+		beans = builder.instances.entrySet().stream().map(entry -> MCPFeatures.createBeanDefinition(entry.getKey(), entry.getValue())).filter(Objects::nonNull).toList(); 
 	}
 
 	@Override
