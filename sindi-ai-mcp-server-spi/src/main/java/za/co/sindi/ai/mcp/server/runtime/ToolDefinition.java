@@ -12,6 +12,7 @@ import java.util.Map;
 import za.co.sindi.ai.mcp.schema.Tool;
 import za.co.sindi.ai.mcp.schema.Tool.InputSchema;
 import za.co.sindi.ai.mcp.schema.Tool.InputSchema.PropertySchema;
+import za.co.sindi.ai.mcp.server.runtime.impl.JSONDataTypes;
 import za.co.sindi.commons.utils.Strings;
 
 /**
@@ -108,7 +109,7 @@ public class ToolDefinition implements FeatureDefinition<Tool>, Serializable {
 				String name = Strings.isNullOrEmpty(argument.getAnnotationName()) ? argument.getParameterName() : argument.getAnnotationName();
 				
 				PropertySchema property = new PropertySchema();
-				property.setType(argument.getParameterType().getName());
+				property.setType(JSONDataTypes.deterimineJsonType(argument.getParameterType())); // property.setType(argument.getParameterType().getName());
 				property.setDescription(argument.getAnnotationDescription());
 				
 				properties.put(name, property);
