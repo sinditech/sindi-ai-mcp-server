@@ -192,12 +192,12 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 		// Get the session ID from the request parameter
 		String sessionId = request.getParameter(DEFAULT_SESSIONID_PARAMETER_NAME);
 		if (sessionId == null) {
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Session ID missing in message endpoint");
+			writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Session ID missing in message endpoint", "text/plain");
 			return ;
 		}
 		
 		if (!sessions.containsKey(sessionId)) {
-			response.sendError(HttpServletResponse.SC_NOT_FOUND, "Session not found: " + sessionId);
+			writeResponse(response, HttpServletResponse.SC_NOT_FOUND, "Session not found: " + sessionId, "text/plain");
 			return ;
 		}
 		

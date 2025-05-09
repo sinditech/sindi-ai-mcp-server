@@ -13,6 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import jakarta.servlet.AsyncContext;
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
 import jakarta.servlet.http.HttpServletResponse;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
@@ -46,7 +48,7 @@ public class SSEHttpServletTransport extends AbstractTransport implements Server
 	
 	private final String sessionId;
 	
-	private AsyncContext asyncContext;
+	private final AsyncContext asyncContext;
 	
 	/**
 	 * @param messageEndpoint
@@ -96,6 +98,41 @@ public class SSEHttpServletTransport extends AbstractTransport implements Server
             throw new TransportException(this.getClass().getSimpleName() + " has already started! If using Server class, note that connect() calls start() automatically.");
         }
 		
+		asyncContext.addListener(new AsyncListener() {
+			
+			@Override
+			public void onTimeout(AsyncEvent event) throws IOException {
+				// TODO Auto-generated method stub
+				Throwable ex = event.getThrowable();
+				if (ex != null) {
+					LOGGER.log(Level.WARNING, "[sessionId="+sessionId+"] onTimeout() received from async event.", ex);
+					getMessageHandler().onError(ex);
+				}
+			}
+			
+			@Override
+			public void onStartAsync(AsyncEvent event) throws IOException {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void onError(AsyncEvent event) throws IOException {
+				// TODO Auto-generated method stub
+				Throwable ex = event.getThrowable();
+				if (ex != null) {
+					LOGGER.log(Level.WARNING, "[sessionId="+sessionId+"] onError() received from async event.", ex);
+					getMessageHandler().onError(ex);
+				}
+			}
+			
+			@Override
+			public void onComplete(AsyncEvent event) throws IOException {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+		
 		return broadcast(TEXT_PLAIN, ENDPOINT_EVENT_TYPE, messageEndpoint + "?" + sessionIdParameterName + "=" + sessionId);
 	}
 
@@ -126,14 +163,13 @@ public class SSEHttpServletTransport extends AbstractTransport implements Server
 				PrintWriter writer = response.getWriter();
 				writer.write("event: " + eventType + "\n");
 				writer.write("data: " + data + "\n\n");
-				writer.flush();
 				
 				if (writer.checkError()) {
 					throw new IOException("Client disconnected");
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				LOGGER.log(Level.WARNING, "Error sending async event", e);
+				LOGGER.log(Level.WARNING, "[sessionId="+sessionId+"] Error sending async event", e);
 				// Complete the async context
 				asyncContext.complete();
 	            
