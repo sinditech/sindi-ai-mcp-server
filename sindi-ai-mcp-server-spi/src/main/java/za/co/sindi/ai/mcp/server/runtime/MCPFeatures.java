@@ -35,7 +35,7 @@ public class MCPFeatures {
 	private static final String LANGCHAIN4J_TOOL_P_CLASS_NAME = "dev.langchain4j.agent.tool.P";
 	private static final Class<? extends Annotation> LANGCHAIN4J_TOOL_P_ANNOTATION_CLASS;
 	
-	public static final Class<? extends Annotation>[] MCP_METHOD_CLASSES;
+	public static final Class<? extends Annotation>[] MCP_METHOD_ANNOTATIONS;
 	
 	static {
 		List<Class<? extends Annotation>> annotations = new ArrayList<>(List.of(Tool.class, Prompt.class, Resource.class, ResourceTemplate.class));
@@ -48,7 +48,7 @@ public class MCPFeatures {
 		LANGCHAIN4J_TOOL_ANNOTATION_CLASS = clazz;
 		
 		if (LANGCHAIN4J_TOOL_ANNOTATION_CLASS != null) annotations.add(LANGCHAIN4J_TOOL_ANNOTATION_CLASS);
-		MCP_METHOD_CLASSES = annotations.toArray(new Class[annotations.size()]);
+		MCP_METHOD_ANNOTATIONS = annotations.toArray(new Class[annotations.size()]);
 		
 		clazz = null;
 		try {
