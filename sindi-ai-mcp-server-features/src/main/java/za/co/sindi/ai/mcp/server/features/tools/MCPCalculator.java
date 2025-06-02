@@ -1,4 +1,4 @@
-package za.co.sindi.ai.mcp.server.mcp.tools;
+package za.co.sindi.ai.mcp.server.features.tools;
 
 import za.co.sindi.ai.mcp.server.spi.Tool;
 import za.co.sindi.ai.mcp.server.spi.ToolArgument;

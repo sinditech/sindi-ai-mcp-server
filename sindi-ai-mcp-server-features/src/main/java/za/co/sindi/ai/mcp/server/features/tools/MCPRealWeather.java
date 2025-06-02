@@ -1,4 +1,4 @@
-package za.co.sindi.ai.mcp.server.mcp.tools;
+package za.co.sindi.ai.mcp.server.features.tools;
 
 ///usr/bin/env jbang "$0" "$@" ; exit $?
 //DEPS io.quarkus:quarkus-bom:3.19.2@pom
@@ -162,7 +162,7 @@ public class MCPRealWeather {
     return false;
   }
   
-//  public static void main(String[] args) {
-//	System.out.println(new MCPRealWeather().getWeather("Johannesburg", "ZA"));
-//  }
+  public static void main(String[] args) {
+	System.out.println(new MCPRealWeather().getWeather("Johannesburg", "ZA"));
+  }
 }

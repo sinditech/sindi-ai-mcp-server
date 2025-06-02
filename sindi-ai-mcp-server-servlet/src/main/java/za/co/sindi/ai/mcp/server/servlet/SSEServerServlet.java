@@ -3,11 +3,10 @@ package za.co.sindi.ai.mcp.server.servlet;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import jakarta.annotation.Resource;
@@ -31,10 +30,12 @@ import za.co.sindi.ai.mcp.server.impl.FeatureManager;
 import za.co.sindi.ai.mcp.server.mcp.scanner.ServletContextResourceContext;
 import za.co.sindi.ai.mcp.server.runtime.BeanDefinitionRegistry;
 import za.co.sindi.ai.mcp.server.runtime.FeatureDefinitionManager;
+import za.co.sindi.ai.mcp.server.runtime.SessionManager;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultBeanDefinitionRegistry.BeanDefinitionRegistryBuilder;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultFeatureDefinitionManager;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultFeatureExecutorFactory;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPServerConfig;
+import za.co.sindi.ai.mcp.server.runtime.impl.DefaultSessionManager;
 import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
 import za.co.sindi.commons.utils.IOUtils;
 import za.co.sindi.resource.scanner.ClassScanner;
@@ -70,7 +71,8 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 	private static final String DEFAULT_SESSIONID_PARAMETER_NAME = "sessionId";
 	
 	/** Map of active client sessions, keyed by session ID */
-	private final Map<String, Server> sessions = new ConcurrentHashMap<>();
+//	private final Map<String, Server> sessions = new ConcurrentHashMap<>();
+	private final SessionManager sessionManager = new DefaultSessionManager();
 	
 	private final Set<String> ALLOWED_HTTP_METHODS = Set.of("GET", "POST");
 	
@@ -172,8 +174,9 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 		transport.setExecutor(managedExecutorService);
 		String sessionId = transport.getSessionId();
 		Server server = serverFactory.create(transport);
-		server.setCloseCallback(() -> sessions.remove(sessionId));
-		sessions.put(sessionId, server);
+		server.setCloseCallback(() -> /* sessions.remove(sessionId) */ sessionManager.removeSession(sessionId));
+//		sessions.put(sessionId, server);
+		sessionManager.addSession(sessionId, server);
 		server.connect();
 	}
 
@@ -196,12 +199,12 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 			return ;
 		}
 		
-		if (!sessions.containsKey(sessionId)) {
+		if (/*!sessions.containsKey(sessionId)*/ !sessionManager.sessionExists(sessionId)) {
 			writeResponse(response, HttpServletResponse.SC_NOT_FOUND, "Session not found: " + sessionId, "text/plain");
 			return ;
 		}
 		
-		Server server = sessions.get(sessionId);
+		Server server = sessionManager.getSession(sessionId);  // sessions.get(sessionId);
 		SSEHttpServletTransport serverTransport = (SSEHttpServletTransport) server.getTransport();
 		
 		String contentBody = IOUtils.toString(request.getReader());
@@ -228,9 +231,9 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 	public CompletableFuture<Void> notifyAllClients(ServerNotification notification) {
 		// TODO Auto-generated method stub
 		@SuppressWarnings("unchecked")
-		CompletableFuture<Void>[] allFutures = new CompletableFuture[sessions.size()];
+		CompletableFuture<Void>[] allFutures = new CompletableFuture[ sessionManager.totalSessions() /* sessions.size() */];
 		int i = 0;
-		for (Server server : sessions.values()) {
+		for (Server server : sessionManager.getSessions()  /* sessions.values() */) {
 			allFutures[i++] = server.sendNotification(notification);
 		}
 		return CompletableFuture.allOf(allFutures);
@@ -239,12 +242,21 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 	@Override
 	public void close() throws Exception {
 		// TODO Auto-generated method stub
-		if (!sessions.isEmpty()) {
-			for(Server server : sessions.values()) {
+//		if (!sessions.isEmpty()) {
+//			for(Server server : sessions.values()) {
+//				server.closeQuietly();
+//			}
+//			
+//			sessions.clear();
+//		}
+		
+		if (sessionManager.totalSessions() > 0) {
+			Iterator<Server> itr = sessionManager.iterator();
+			while (itr.hasNext()) {
+				Server server = itr.next();
 				server.closeQuietly();
+				itr.remove();
 			}
-			
-			sessions.clear();
 		}
 	}
 }

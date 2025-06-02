@@ -26,6 +26,8 @@ import za.co.sindi.ai.mcp.server.BaseServer;
 import za.co.sindi.ai.mcp.server.DefaultServer;
 import za.co.sindi.ai.mcp.server.Server;
 import za.co.sindi.ai.mcp.server.ServerFactory;
+import za.co.sindi.ai.mcp.server.features.tools.MCPCalculator;
+import za.co.sindi.ai.mcp.server.features.tools.MCPRealWeather;
 import za.co.sindi.ai.mcp.server.impl.FeatureManager;
 import za.co.sindi.ai.mcp.server.runtime.BeanDefinitionRegistry;
 import za.co.sindi.ai.mcp.server.runtime.FeatureDefinitionManager;
@@ -34,8 +36,6 @@ import za.co.sindi.ai.mcp.server.runtime.impl.DefaultFeatureDefinitionManager;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultFeatureExecutorFactory;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPServerConfig;
 import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
-import za.co.sindi.ai.mcp.tools.MCPCalculator;
-import za.co.sindi.ai.mcp.tools.MCPRealWeather;
 
 /**
  * @author Buhake Sindi

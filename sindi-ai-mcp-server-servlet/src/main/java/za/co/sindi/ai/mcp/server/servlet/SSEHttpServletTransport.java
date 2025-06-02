@@ -82,9 +82,10 @@ public class SSEHttpServletTransport extends AbstractTransport implements Server
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		// TODO Auto-generated method stub
 		asyncContext.complete();
+		super.close();
 	}
 
 	@Override

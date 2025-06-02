@@ -3,6 +3,7 @@
  */
 package za.co.sindi.ai.mcp.server.rest;
 
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -75,7 +76,7 @@ public class SSERestServerTransport extends AbstractTransport implements ServerT
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		// TODO Auto-generated method stub
 		sseEventSink.close();
 	}
