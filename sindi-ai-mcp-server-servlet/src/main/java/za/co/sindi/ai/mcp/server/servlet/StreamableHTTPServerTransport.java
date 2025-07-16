@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -333,6 +334,17 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 					sessionId = sessionIdGenerator.generate();
 					if (sessionInitializationEvent != null) sessionInitializationEvent.onSessionInitialized(sessionId, this);
 				}
+			}
+			
+			if (!isInitializationRequest) {
+				// If an Mcp-Session-Id is returned by the server during initialization,
+		        // clients using the Streamable HTTP transport MUST include it 
+		        // in the Mcp-Session-Id header on all of their subsequent HTTP requests.
+				
+				Optional<String> sessionIdOptional = StreamableHTTPServerServlet.validateSession(request, response);
+				if (sessionIdOptional.isEmpty()) return ;
+				
+				if (!StreamableHTTPServerServlet.validateProtocolVersion(request, response)) return ;
 			}
 			
 			boolean hasRequests = Arrays.stream(messages).anyMatch(message -> message instanceof JSONRPCRequest);

@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -28,6 +29,7 @@ import za.co.sindi.ai.mcp.schema.JSONRPCError.Error;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
 import za.co.sindi.ai.mcp.schema.JSONRPCVersion;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
+import za.co.sindi.ai.mcp.schema.ProtocolVersion;
 import za.co.sindi.ai.mcp.schema.ServerNotification;
 import za.co.sindi.ai.mcp.server.DefaultServer;
 import za.co.sindi.ai.mcp.server.Server;
@@ -62,6 +64,8 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 	private static final String DEFAULT_APPLICATION_NAME = "Java MCP Server";
 	
 	private static final String DEFAULT_APPLICATON_VERSION = "1.0.0-streamable";
+	
+	private static final String MCP_PROTOCOL_VERSION_HTTP_HEADER_NAME = "mcp-protocol-version";
 	
 	protected static final String MCP_SESSION_ID_HTTP_HEADER_NAME = "mcp-session-id";
 	
@@ -188,13 +192,14 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 			return ;
 		}
 		
-		String sessionId = request.getHeader(MCP_SESSION_ID_HTTP_HEADER_NAME);
-		if (Strings.isNullOrEmpty(sessionId)) {
-			writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Bad Request: Mcp-Session-Id header is required"));
+		Optional<String> sessionIdOptional = validateSession(request, response);
+		if (sessionIdOptional.isEmpty()) return ;
+		
+		if (!validateProtocolVersion(request, response)) {
 			return ;
 		}
 		
-		Server server = sessionManager.getSession(sessionId);
+		Server server = sessionManager.getSession(sessionIdOptional.get());
 		if (server == null) {
 			writeResponse(response, HttpServletResponse.SC_NOT_FOUND, createJSONRPCError(ErrorCodes.REQUEST_TIMEOUT, "Session not found"));
 			return ;
@@ -246,20 +251,17 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 	@Override
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		String sessionId = request.getHeader(MCP_SESSION_ID_HTTP_HEADER_NAME);
-		if (Strings.isNullOrEmpty(sessionId)) {
-			writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Bad Request: Mcp-Session-Id header is required"));
-			return ;
-		}
+		Optional<String> sessionIdOptional = validateSession(request, response);
+		if (sessionIdOptional.isEmpty()) return ;
 		
-		Server server = sessionManager.getSession(sessionId);
+		Server server = sessionManager.getSession(sessionIdOptional.get());
 		if (server == null) {
 			writeResponse(response, HttpServletResponse.SC_NOT_FOUND, createJSONRPCError(ErrorCodes.REQUEST_TIMEOUT, "Session not found"));
 			return ;
 		}
 		
 		server.closeQuietly();
-		sessionManager.removeSession(sessionId);
+		sessionManager.removeSession(sessionIdOptional.get());
 		writeResponse(response, HttpServletResponse.SC_OK, TEXT_PLAIN, "OK");
 	}
 	
@@ -291,5 +293,30 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 		PrintWriter writer = response.getWriter();
 		writer.write(message);
 		writer.flush();
+	}
+	
+	protected static Optional<String> validateSession(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		// TODO Auto-generated method stub
+		String sessionId = request.getHeader(MCP_SESSION_ID_HTTP_HEADER_NAME);
+		if (Strings.isNullOrEmpty(sessionId)) {
+			writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Bad Request: Mcp-Session-Id header is required"));
+			return Optional.empty();
+		}
+		
+		return Optional.of(sessionId);
+	}
+	
+	protected static boolean validateProtocolVersion(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		// TODO Auto-generated method stub
+		String protocolVersion = request.getHeader(MCP_PROTOCOL_VERSION_HTTP_HEADER_NAME);
+		try {
+			ProtocolVersion.of(protocolVersion);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Bad Request: Unsupported protocol version (supported versions: " + Strings.join(", ", ProtocolVersion.values()) + ")"));
+			return false;
+		}
+		
+		return true;
 	}
 }
