@@ -3,6 +3,8 @@
  */
 package za.co.sindi.ai.mcp.server;
 
+import java.util.concurrent.CompletableFuture;
+
 import za.co.sindi.ai.mcp.schema.Root;
 
 /**
@@ -11,5 +13,5 @@ import za.co.sindi.ai.mcp.schema.Root;
  */
 public interface RootsProvider {
 
-	public Root[] listRoots(final Server server);
+	public CompletableFuture<Root[]> listRoots();
 }

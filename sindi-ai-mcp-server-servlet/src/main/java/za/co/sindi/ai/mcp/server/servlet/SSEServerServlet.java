@@ -6,34 +6,29 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 import jakarta.annotation.Resource;
 import jakarta.enterprise.concurrent.ManagedExecutorService;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import za.co.sindi.ai.mcp.mapper.JSONObjectMapper;
-import za.co.sindi.ai.mcp.mapper.ObjectMapper;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
-import za.co.sindi.ai.mcp.schema.ServerNotification;
-import za.co.sindi.ai.mcp.server.DefaultServer;
-import za.co.sindi.ai.mcp.server.Server;
-import za.co.sindi.ai.mcp.server.ServerFactory;
-import za.co.sindi.ai.mcp.server.impl.FeatureManager;
+import za.co.sindi.ai.mcp.server.MCPServerSession;
+import za.co.sindi.ai.mcp.server.SessionFactory;
+import za.co.sindi.ai.mcp.server.impl.MCPServerFeatureManager;
 import za.co.sindi.ai.mcp.server.mcp.scanner.ServletContextResourceContext;
 import za.co.sindi.ai.mcp.server.runtime.BeanDefinitionRegistry;
 import za.co.sindi.ai.mcp.server.runtime.FeatureDefinitionManager;
+import za.co.sindi.ai.mcp.server.runtime.MCPContextFactory;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultBeanDefinitionRegistry.BeanDefinitionRegistryBuilder;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultFeatureDefinitionManager;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultFeatureExecutorFactory;
+import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPContextFactory;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPServerConfig;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultSessionManager;
 import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
@@ -48,7 +43,7 @@ import za.co.sindi.resource.scanner.impl.ResourceContextResourceScanner;
  * @since 24 March 2025
  */
 @WebServlet(value = "/*", asyncSupported = true)
-public class SSEServerServlet extends HttpServlet implements MCPServerTransportProvider {
+public class SSEServerServlet extends HttpServlet /* implements MCPServerTransportProvider */ {
 	
 	private static final Logger LOGGER = Logger.getLogger(SSEServerServlet.class.getName());
 	
@@ -57,9 +52,6 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 	private static final String DEFAULT_APPLICATON_VERSION = "1.0.0";
 	
 	private static final String UTF_8 = "UTF-8";
-	
-	/** JSON object mapper for serialization/deserialization */
-	private final ObjectMapper objectMapper = JSONObjectMapper.newInstance();
 	
 	/** Default endpoint path for SSE connections */
 	private static final String DEFAULT_SSE_ENDPOINT = "/sse";
@@ -76,30 +68,27 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 	
 	private final Set<String> ALLOWED_HTTP_METHODS = Set.of("GET", "POST");
 	
-	private final HttpServletMCPServer thisServer = new HttpServletMCPServer(this); //we need an instance to this server;
+	private final MCPContextFactory mcpContextFactory = new DefaultMCPContextFactory();
 	
-	private ServerFactory serverFactory;
+	private SessionFactory sessionFactory;
 	
 	private MCPServerConfig mcpServerConfig;
 	
-	private FeatureManager featureManager;
+	private MCPServerFeatureManager featureManager;
 	
 	@Resource
 	private ManagedExecutorService managedExecutorService;
 
 	@Override
-	public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
+	public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		HttpServletRequest request = (HttpServletRequest) req;
-        HttpServletResponse response = (HttpServletResponse) res;
-        
         String requestMethod = request.getMethod();
         if (!ALLOWED_HTTP_METHODS.contains(requestMethod)) {
         	response.sendError(HttpServletResponse.SC_BAD_REQUEST, "HTTP request method '" + requestMethod + "' is not supported.");
         	return ;
         }
         
-        super.service(req, res);
+        super.service(request, response);
 	}
 
 	@Override
@@ -130,11 +119,15 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 			mcpServerConfig = new DefaultMCPServerConfig(DEFAULT_APPLICATION_NAME, DEFAULT_APPLICATON_VERSION, null).enableAll();
 			
 			FeatureDefinitionManager featureDefinitionManager = new DefaultFeatureDefinitionManager(builder.build().getBeans(), new DefaultFeatureExecutorFactory());
-			featureManager = new FeatureManager(thisServer, featureDefinitionManager);
-			serverFactory = (transport) -> {
-				Server server = new DefaultServer(transport, thisServer.getServerInfo(), thisServer.getServerCapabilities(), thisServer.getInstructions());
-				featureManager.registerServer(server, featureDefinitionManager);
-				return server;
+			featureManager = new MCPServerFeatureManager(mcpServerConfig.getCapabilities(), sessionManager, featureDefinitionManager); //new MCPServerFeatureManager(thisServer, featureDefinitionManager);
+			sessionFactory = (transport) -> {
+				MCPServerSession session = new MCPServerSession(transport, mcpServerConfig.getServerInfo(), mcpServerConfig.getCapabilities(), mcpServerConfig.getInstructions());
+				featureManager.setup(session);
+				session.setCloseCallback(() -> {
+					LOGGER.info("Client Disconnected: " + transport.getSessionId());
+				    sessionManager.removeSession(transport.getSessionId());
+				});
+				return session;
 			};
 		} catch (ScanningException e) {
 			// TODO Auto-generated catch block
@@ -145,7 +138,14 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 	@Override
 	public void destroy() {
 		// TODO Auto-generated method stub
-		thisServer.closeQuietly(); //Weird magic, but it will call the this.close(), so no stress needed here.
+		if (sessionManager.totalSessions() > 0) {
+			Iterator<MCPServerSession> itr = sessionManager.iterator();
+			while (itr.hasNext()) {
+				MCPServerSession session = itr.next();
+				session.closeQuietly();
+				itr.remove();
+			}
+		}
 	}
 
 	/* (non-Javadoc)
@@ -160,6 +160,13 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 			return;
 		}
 		
+		String sessionId = request.getParameter(DEFAULT_SESSIONID_PARAMETER_NAME);
+		if (sessionId != null && sessionManager.sessionExists(sessionId)) {
+			LOGGER.warning("Client Reconnecting? This shouldn't happen; when client has a sessionId (found value " + sessionId + "), GET " + DEFAULT_SSE_ENDPOINT + " should not be called again.");
+			writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, "This GET method cannot be called when a Session ID is present.", "text/plain");
+			return ;
+		}
+				
 		response.setContentType("text/event-stream");
 		response.setCharacterEncoding(UTF_8);
 		response.setHeader("Cache-Control", "no-cache");
@@ -170,14 +177,14 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 		asyncContext.setTimeout(0);
 
 		SSEHttpServletTransport transport = new SSEHttpServletTransport(DEFAULT_MESSAGE_ENDPOINT, DEFAULT_SESSIONID_PARAMETER_NAME, asyncContext);
-		transport.setRequestTimeout(thisServer.getRequestTimeout());
+//		transport.setRequestTimeout(thisServer.getRequestTimeout());
 		transport.setExecutor(managedExecutorService);
-		String sessionId = transport.getSessionId();
-		Server server = serverFactory.create(transport);
-		server.setCloseCallback(() -> /* sessions.remove(sessionId) */ sessionManager.removeSession(sessionId));
-//		sessions.put(sessionId, server);
-		sessionManager.addSession(sessionId, server);
-		server.connect();
+		sessionId = transport.getSessionId();
+		MCPServerSession session = sessionFactory.create(transport);
+		sessionManager.addSession(sessionId, session);
+		session.connect();
+		LOGGER.info("Client Connected: " + sessionId);
+		mcpContextFactory.getMCPContext(mcpServerConfig, featureManager, featureManager, featureManager, session);
 	}
 
 	/* (non-Javadoc)
@@ -204,8 +211,8 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 			return ;
 		}
 		
-		Server server = sessionManager.getSession(sessionId);  // sessions.get(sessionId);
-		SSEHttpServletTransport serverTransport = (SSEHttpServletTransport) server.getTransport();
+		MCPServerSession session = sessionManager.getSession(sessionId);  // sessions.get(sessionId);
+		SSEHttpServletTransport serverTransport = (SSEHttpServletTransport) session.getTransport();
 		
 		String contentBody = IOUtils.toString(request.getReader());
 		serverTransport.handleMessage(MCPSchema.deserializeJSONRPCMessage(contentBody));
@@ -219,44 +226,5 @@ public class SSEServerServlet extends HttpServlet implements MCPServerTransportP
 		PrintWriter writer = response.getWriter();
 		writer.write(message);
 		writer.flush();
-	}
-
-	@Override
-	public MCPServerConfig getMCPServerConfig() {
-		// TODO Auto-generated method stub
-		return mcpServerConfig;
-	}
-
-	@Override
-	public CompletableFuture<Void> notifyAllClients(ServerNotification notification) {
-		// TODO Auto-generated method stub
-		@SuppressWarnings("unchecked")
-		CompletableFuture<Void>[] allFutures = new CompletableFuture[ sessionManager.totalSessions() /* sessions.size() */];
-		int i = 0;
-		for (Server server : sessionManager.getSessions()  /* sessions.values() */) {
-			allFutures[i++] = server.sendNotification(notification);
-		}
-		return CompletableFuture.allOf(allFutures);
-	}
-
-	@Override
-	public void close() throws Exception {
-		// TODO Auto-generated method stub
-//		if (!sessions.isEmpty()) {
-//			for(Server server : sessions.values()) {
-//				server.closeQuietly();
-//			}
-//			
-//			sessions.clear();
-//		}
-		
-		if (sessionManager.totalSessions() > 0) {
-			Iterator<Server> itr = sessionManager.iterator();
-			while (itr.hasNext()) {
-				Server server = itr.next();
-				server.closeQuietly();
-				itr.remove();
-			}
-		}
 	}
 }

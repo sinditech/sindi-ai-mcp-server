@@ -88,6 +88,9 @@ public abstract class AbstractFeatureExecutor<REQ extends Request, T, FD extends
             if (argument instanceof Boolean) {
                 return argument;
             }
+            if (argument instanceof String booleanString) {
+            	return Boolean.valueOf(booleanString);
+            }
             throw new IllegalArgumentException(String.format(
                     "Argument \"%s\" is not convertable to %s, got %s: <%s>",
                     parameterName, parameterClass.getName(), argument.getClass().getName(), argument));

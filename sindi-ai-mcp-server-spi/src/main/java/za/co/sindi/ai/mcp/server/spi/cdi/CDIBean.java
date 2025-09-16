@@ -1,7 +1,7 @@
 /**
  * 
  */
-package za.co.sindi.ai.mcp.server.cdi;
+package za.co.sindi.ai.mcp.server.spi.cdi;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;

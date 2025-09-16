@@ -42,6 +42,6 @@ public class DefaultFeatureExecutorFactory implements FeatureExecutorFactory {
 	@Override
 	public FeatureExecutor<ListResourceTemplatesRequest> createResourceTemplateFeatureExecutor(BeanDefinition bean,	ResourceTemplatesDefinition resourceTemplates) {
 		// TODO Auto-generated method stub
-		return new DefaultResourceTemplatesFeatureExecutor(bean, resourceTemplates);
+		return new DefaultListResourceTemplatesFeatureExecutor(bean, resourceTemplates);
 	}
 }

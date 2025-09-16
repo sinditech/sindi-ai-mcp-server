@@ -11,14 +11,15 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import za.co.sindi.ai.mcp.server.runtime.ElicitDefinition.ElicitArgumentInfo;
 import za.co.sindi.ai.mcp.server.runtime.PromptDefinition.PromptArgumentInfo;
 import za.co.sindi.ai.mcp.server.runtime.ToolDefinition.ToolArgumentInfo;
+import za.co.sindi.ai.mcp.server.spi.Argument;
+import za.co.sindi.ai.mcp.server.spi.Elicit;
 import za.co.sindi.ai.mcp.server.spi.Prompt;
-import za.co.sindi.ai.mcp.server.spi.PromptArgument;
 import za.co.sindi.ai.mcp.server.spi.Resource;
 import za.co.sindi.ai.mcp.server.spi.ResourceTemplate;
 import za.co.sindi.ai.mcp.server.spi.Tool;
-import za.co.sindi.ai.mcp.server.spi.ToolArgument;
 import za.co.sindi.commons.utils.Annotations;
 
 /**
@@ -38,7 +39,7 @@ public class MCPFeatures {
 	public static final Class<? extends Annotation>[] MCP_METHOD_ANNOTATIONS;
 	
 	static {
-		List<Class<? extends Annotation>> annotations = new ArrayList<>(List.of(Tool.class, Prompt.class, Resource.class, ResourceTemplate.class));
+		List<Class<? extends Annotation>> annotations = new ArrayList<>(List.of(Tool.class, Prompt.class, Resource.class, ResourceTemplate.class, Elicit.class));
 		Class<? extends Annotation> clazz = null;
 		try {
 			clazz = (Class<? extends Annotation>) Class.forName(LANGCHAIN4J_TOOL_CLASS_NAME);
@@ -64,19 +65,21 @@ public class MCPFeatures {
 		final List<ResourceTemplatesDefinition> resourceTemplates = new ArrayList<>();
 		final List<ToolDefinition> tools = new ArrayList<>();
 		final List<PromptDefinition> prompts = new ArrayList<>();
+		final List<ElicitDefinition> elicitations = new ArrayList<>();
 		
-		extractMCPDefinition(clazz, tools, prompts, resources, resourceTemplates);
+		extractMCPDefinition(clazz, tools, prompts, resources, resourceTemplates, elicitations);
 		if (tools.isEmpty() &&
 			prompts.isEmpty() && 
 			resources.isEmpty() && 
-			resourceTemplates.isEmpty()) {
+			resourceTemplates.isEmpty() &&
+			elicitations.isEmpty()) {
 			return null;
 		}
 		
-		return new BeanDefinition(clazz, instance, resources, resourceTemplates, tools, prompts);
+		return new BeanDefinition(clazz, instance, resources, resourceTemplates, tools, prompts, elicitations);
 	}
 	
-	private static void extractMCPDefinition(final Class<?> clazz, List<ToolDefinition> tools, List<PromptDefinition> prompts, List<ResourceDefinition> resources, List<ResourceTemplatesDefinition> resourceTemplates) {
+	private static void extractMCPDefinition(final Class<?> clazz, List<ToolDefinition> tools, List<PromptDefinition> prompts, List<ResourceDefinition> resources, List<ResourceTemplatesDefinition> resourceTemplates, List<ElicitDefinition> elicitations) {
 		try {
 			for (Method declaredMethod : clazz.getDeclaredMethods()) {
 				ToolDefinition tool = createToolDefinition(declaredMethod);
@@ -89,6 +92,8 @@ public class MCPFeatures {
 				if (resource != null) resources.add(resource);
 				ResourceTemplatesDefinition resourceTemplatesDef = createResourceTemplatesDefinition(declaredMethod);
 				if (resourceTemplatesDef != null) resourceTemplates.add(resourceTemplatesDef);
+				ElicitDefinition elicit = createElicitDefinition(declaredMethod);
+				if (elicit != null) elicitations.add(elicit);
 			}
 		} catch (SecurityException | ReflectiveOperationException e) {
 			// TODO Auto-generated catch block
@@ -112,7 +117,7 @@ public class MCPFeatures {
 			parameters = new ArrayList<>();
 			for (int index = 0; index < parameterCount; index++) {
 				Parameter parameter = method.getParameters()[index];
-				ToolArgument argument = parameter.getAnnotation(ToolArgument.class);
+				Argument argument = parameter.getAnnotation(Argument.class);
 				ToolArgumentInfo parameterDefinition = new ToolArgumentInfo(method.getParameterTypes()[index], parameter.getName(), argument.name(), argument.description(), argument.required());
 				parameters.add(parameterDefinition);
 			}
@@ -150,7 +155,7 @@ public class MCPFeatures {
 		return parameters;
 	}
 	
-	public static PromptDefinition createPromptDefinition(final Method method) {
+	private static PromptDefinition createPromptDefinition(final Method method) {
 		PromptDefinition promptDefinition = null;
 		Prompt prompt = method.getAnnotation(Prompt.class);
 		if (prompt != null) {
@@ -166,7 +171,7 @@ public class MCPFeatures {
 			parameters = new ArrayList<>();
 			for (int index = 0; index < parameterCount; index++) {
 				Parameter parameter = method.getParameters()[index];
-				PromptArgument argument = parameter.getAnnotation(PromptArgument.class);
+				Argument argument = parameter.getAnnotation(Argument.class);
 				PromptArgumentInfo parameterDefinition = new PromptArgumentInfo(method.getParameterTypes()[index], parameter.getName(), argument.name(), argument.description(), argument.required());
 				parameters.add(parameterDefinition);
 			}
@@ -175,7 +180,7 @@ public class MCPFeatures {
 		return parameters;
 	}
 	
-	public static ResourceDefinition createResourceDefinition(final Method method) {
+	private static ResourceDefinition createResourceDefinition(final Method method) {
 		ResourceDefinition resourceDefinition = null;
 		Resource resource = method.getAnnotation(Resource.class);
 		if (resource != null) {
@@ -184,12 +189,37 @@ public class MCPFeatures {
 		return resourceDefinition;
 	}
 	
-	public static ResourceTemplatesDefinition createResourceTemplatesDefinition(final Method method) {
+	private static ResourceTemplatesDefinition createResourceTemplatesDefinition(final Method method) {
 		ResourceTemplatesDefinition resourceTemplatesDefinition = null;
 		ResourceTemplate resourceTemplate = method.getAnnotation(ResourceTemplate.class);
 		if (resourceTemplate != null) {
 			resourceTemplatesDefinition = new ResourceTemplatesDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), resourceTemplate.uri(), resourceTemplate.name(), resourceTemplate.description(), resourceTemplate.mimeType());
 		}
 		return resourceTemplatesDefinition;
+	}
+	
+	private static ElicitDefinition createElicitDefinition(final Method method) {
+		ElicitDefinition elicitDefinition = null;
+		Elicit elicit = method.getAnnotation(Elicit.class);
+		if (elicit != null) {
+			elicitDefinition = new ElicitDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), elicit.message(), createElicitArgumentInfo(method));
+		}
+		return elicitDefinition;
+	}
+	
+	private static List<ElicitArgumentInfo> createElicitArgumentInfo(final Method method) {
+		List<ElicitArgumentInfo> parameters = null;
+		int parameterCount = method.getParameterCount();
+		if (parameterCount > 0) {
+			parameters = new ArrayList<>();
+			for (int index = 0; index < parameterCount; index++) {
+				Parameter parameter = method.getParameters()[index];
+				Argument argument = parameter.getAnnotation(Argument.class);
+				ElicitArgumentInfo parameterDefinition = new ElicitArgumentInfo(method.getParameterTypes()[index], parameter.getName(), argument.name(), argument.description(), argument.required());
+				parameters.add(parameterDefinition);
+			}
+		}
+		
+		return parameters;
 	}
 }

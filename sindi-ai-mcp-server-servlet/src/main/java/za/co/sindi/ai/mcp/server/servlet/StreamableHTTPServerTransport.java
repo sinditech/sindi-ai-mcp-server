@@ -156,7 +156,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 					}
 					
 					writeSSEEvent(streamMapping.get(STANDALONE_SSE_STREAM_ID), message, eventId);
-					CompletableFuture.completedFuture(null);
+					return ;
 				}
 				
 				final StreamId streamId = requestToStreamMapping.get(requestId);
@@ -211,7 +211,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 				// TODO Auto-generated catch block
 				throw new CompletionException("Error sending messages.", e);
 			}
-		});
+		}, getExecutor());
 	}
 	
 	private void writeSSEEvent(final HttpServletResponse response, final JSONRPCMessage message, final EventId eventId) throws IOException {
@@ -332,7 +332,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 				
 				if (initialized.compareAndSet(false, true)) {
 					sessionId = sessionIdGenerator.generate();
-					if (sessionInitializationEvent != null) sessionInitializationEvent.onSessionInitialized(sessionId, this);
+					if (sessionInitializationEvent != null) sessionInitializationEvent.onSessionInitialized(sessionId);
 				}
 			}
 			
@@ -488,7 +488,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 			response.setHeader(StreamableHTTPServerServlet.MCP_SESSION_ID_HTTP_HEADER_NAME, sessionId);
 		}
 
-		AsyncContext asyncContext = request.startAsync();
+		final AsyncContext asyncContext = request.startAsync();
 		asyncContext.setTimeout(0);
 		return asyncContext;
 	}

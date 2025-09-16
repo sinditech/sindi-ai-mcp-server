@@ -18,6 +18,7 @@ public class BeanDefinition implements Serializable {
 	private List<ResourceTemplatesDefinition> resourceTemplates;
 	private List<ToolDefinition> tools;
 	private List<PromptDefinition> prompts;
+	private List<ElicitDefinition> elicitations;
 	
 	/**
 	 * @param beanClass
@@ -26,8 +27,9 @@ public class BeanDefinition implements Serializable {
 	 * @param resourceTemplates
 	 * @param tools
 	 * @param prompts
+	 * @param elicitations;
 	 */
-	public BeanDefinition(Class<?> beanClass, Object instance, List<ResourceDefinition> resources, List<ResourceTemplatesDefinition> resourceTemplates, List<ToolDefinition> tools,	List<PromptDefinition> prompts) {
+	public BeanDefinition(Class<?> beanClass, Object instance, List<ResourceDefinition> resources, List<ResourceTemplatesDefinition> resourceTemplates, List<ToolDefinition> tools,	List<PromptDefinition> prompts, List<ElicitDefinition> elicitations) {
 		super();
 		this.beanClass = beanClass;
 		this.instance = instance;
@@ -35,6 +37,7 @@ public class BeanDefinition implements Serializable {
 		this.resourceTemplates = resourceTemplates;
 		this.tools = tools;
 		this.prompts = prompts;
+		this.elicitations = elicitations;
 	}
 	
 	/**
@@ -77,5 +80,12 @@ public class BeanDefinition implements Serializable {
 	 */
 	public List<PromptDefinition> getPrompts() {
 		return prompts;
+	}
+
+	/**
+	 * @return the elicitations
+	 */
+	public List<ElicitDefinition> getElicitations() {
+		return elicitations;
 	}
 }

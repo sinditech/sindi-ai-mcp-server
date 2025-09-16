@@ -126,6 +126,6 @@ public class DefaultFeatureDefinitionManager implements FeatureDefinitionManager
 	@Override
 	public RequestHandler<ListResourceTemplatesResult> getResourceTemplatesResultHandler(String resourceTemplateUri) {
 		// TODO Auto-generated method stub
-		return new DefaultResourceTemplatesResultHandler(resourceTemplatesExecutors.get(resourceTemplateUri));
+		return new DefaultListResourceTemplatesResultHandler(resourceTemplatesExecutors.get(resourceTemplateUri));
 	}
 }

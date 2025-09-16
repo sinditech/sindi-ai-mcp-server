@@ -15,13 +15,13 @@ import za.co.sindi.ai.mcp.server.runtime.ResourceTemplatesDefinition;
  * @author Buhake Sindi
  * @since 22 April 2025
  */
-public class DefaultResourceTemplatesFeatureExecutor extends AbstractFeatureExecutor<ListResourceTemplatesRequest,ResourceTemplate,ResourceTemplatesDefinition> {
+public class DefaultListResourceTemplatesFeatureExecutor extends AbstractFeatureExecutor<ListResourceTemplatesRequest,ResourceTemplate,ResourceTemplatesDefinition> {
 
 	/**
 	 * @param bean
 	 * @param feature
 	 */
-	public DefaultResourceTemplatesFeatureExecutor(BeanDefinition bean, ResourceTemplatesDefinition feature) {
+	public DefaultListResourceTemplatesFeatureExecutor(BeanDefinition bean, ResourceTemplatesDefinition feature) {
 		super(bean, feature);
 		// TODO Auto-generated constructor stub
 	}

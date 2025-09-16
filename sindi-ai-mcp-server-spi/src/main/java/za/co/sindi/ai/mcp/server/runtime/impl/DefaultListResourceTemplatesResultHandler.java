@@ -15,12 +15,12 @@ import za.co.sindi.commons.utils.Arrays;
  * @author Buhake Sindi
  * @since 22 April 2025
  */
-public class DefaultResourceTemplatesResultHandler extends AbstractResultHandler<ListResourceTemplatesRequest, ListResourceTemplatesResult> {
+public class DefaultListResourceTemplatesResultHandler extends AbstractResultHandler<ListResourceTemplatesRequest, ListResourceTemplatesResult> {
 
 	/**
 	 * @param executor
 	 */
-	public DefaultResourceTemplatesResultHandler(FeatureExecutor<ListResourceTemplatesRequest> executor) {
+	public DefaultListResourceTemplatesResultHandler(FeatureExecutor<ListResourceTemplatesRequest> executor) {
 		super(executor);
 		// TODO Auto-generated constructor stub
 	}

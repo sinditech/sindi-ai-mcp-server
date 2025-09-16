@@ -1,12 +1,10 @@
 /**
  * 
  */
-package za.co.sindi.ai.mcp.server.cdi;
+package za.co.sindi.ai.mcp.server.spi.cdi;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.spi.BeanManager;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
-import za.co.sindi.ai.mcp.server.runtime.impl.DefaultSessionManager;
 import za.co.sindi.commons.utils.Strings;
 
 /**
@@ -15,11 +13,11 @@ import za.co.sindi.commons.utils.Strings;
  */
 public class SessionManagerProducer extends CDIBean<SessionManager> {
 
-	public SessionManagerProducer(final BeanManager beanManager) {
+	public SessionManagerProducer(final SessionManager sessionManager) {
 		super.name(Strings.uncapitalize(SessionManager.class.getSimpleName()))
 			 .scope(ApplicationScoped.class)
 			 .beanClass(SessionManager.class)
 			 .types(SessionManager.class)
-			 .produce(e -> new DefaultSessionManager());
+			 .produce(e -> sessionManager);
 	}
 }

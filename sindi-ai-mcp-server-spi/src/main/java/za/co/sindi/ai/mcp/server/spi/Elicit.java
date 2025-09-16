@@ -9,16 +9,12 @@ import java.lang.annotation.Target;
 
 /**
  * @author Buhake Sindi
- * @since 03 April 2025
+ * @since 13 September 2025
  */
 @Documented
 @Retention(RUNTIME)
-@Target(ElementType.PARAMETER)
-public @interface ToolArgument {
+@Target(ElementType.METHOD)
+public @interface Elicit {
 	
-	String name() default "";
-	
-	String description() default "";
-	
-	boolean required() default true;
+	String message() default "";
 }

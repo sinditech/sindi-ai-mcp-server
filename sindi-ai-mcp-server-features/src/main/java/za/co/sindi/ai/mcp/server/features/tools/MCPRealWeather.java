@@ -24,8 +24,8 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonValue;
+import za.co.sindi.ai.mcp.server.spi.Argument;
 import za.co.sindi.ai.mcp.server.spi.Tool;
-import za.co.sindi.ai.mcp.server.spi.ToolArgument;
 
 public class MCPRealWeather {
 
@@ -49,8 +49,8 @@ public class MCPRealWeather {
 
   @Tool(description = "A tool to get the current weather a given city and country code")
   public String getWeather(
-	@ToolArgument(description = "The city to get the weather for") String city, 
-	@ToolArgument(description = "The country code to get the weather for") String countryCode) {
+	@Argument(description = "The city to get the weather for") String city, 
+	@Argument(description = "The country code to get the weather for") String countryCode) {
 
     return getCoordinates(city, countryCode)
         .flatMap(this::fetchWeather)

@@ -11,14 +11,11 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 import jakarta.annotation.Resource;
 import jakarta.enterprise.concurrent.ManagedExecutorService;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,20 +27,22 @@ import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
 import za.co.sindi.ai.mcp.schema.JSONRPCVersion;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.schema.ProtocolVersion;
-import za.co.sindi.ai.mcp.schema.ServerNotification;
-import za.co.sindi.ai.mcp.server.DefaultServer;
-import za.co.sindi.ai.mcp.server.Server;
-import za.co.sindi.ai.mcp.server.ServerFactory;
-import za.co.sindi.ai.mcp.server.impl.FeatureManager;
+import za.co.sindi.ai.mcp.server.EventStore;
+import za.co.sindi.ai.mcp.server.InMemoryEventStore;
+import za.co.sindi.ai.mcp.server.MCPServerSession;
+import za.co.sindi.ai.mcp.server.SessionFactory;
+import za.co.sindi.ai.mcp.server.impl.MCPServerFeatureManager;
 import za.co.sindi.ai.mcp.server.mcp.scanner.ServletContextResourceContext;
 import za.co.sindi.ai.mcp.server.runtime.BeanDefinitionRegistry;
 import za.co.sindi.ai.mcp.server.runtime.FeatureDefinitionManager;
+import za.co.sindi.ai.mcp.server.runtime.MCPContextFactory;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
+import za.co.sindi.ai.mcp.server.runtime.impl.DefaultBeanDefinitionRegistry.BeanDefinitionRegistryBuilder;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultFeatureDefinitionManager;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultFeatureExecutorFactory;
+import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPContextFactory;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPServerConfig;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultSessionManager;
-import za.co.sindi.ai.mcp.server.runtime.impl.DefaultBeanDefinitionRegistry.BeanDefinitionRegistryBuilder;
 import za.co.sindi.ai.mcp.server.runtime.streamable.SessionIdGenerator;
 import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
 import za.co.sindi.commons.utils.Strings;
@@ -57,7 +56,7 @@ import za.co.sindi.resource.scanner.impl.ResourceContextResourceScanner;
  * @since 25 May 2025
  */
 @WebServlet(value = "/mcp", asyncSupported = true)
-public class StreamableHTTPServerServlet extends HttpServlet implements MCPServerTransportProvider {
+public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPServerTransportProvider */ {
 	
 	private static final Logger LOGGER = Logger.getLogger(StreamableHTTPServerServlet.class.getName());
 	
@@ -81,48 +80,20 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 	
 	private final SessionManager sessionManager = new DefaultSessionManager();
 	
-	private final HttpServletMCPServer thisServer = new HttpServletMCPServer(this); //we need an instance to this server;
+	private final EventStore eventStore = new InMemoryEventStore();
 	
-	private ServerFactory serverFactory;
+//	private final HttpServletMCPServer thisServer = new HttpServletMCPServer(this); //we need an instance to this server;
+	private final MCPContextFactory mcpContextFactory = new DefaultMCPContextFactory();
+	
+	private SessionFactory sessionFactory;
 	
 	private MCPServerConfig mcpServerConfig;
 	
-	private FeatureManager featureManager;
+	private MCPServerFeatureManager featureManager;
 	
 	@Resource
 	private ManagedExecutorService managedExecutorService;
 	
-	@Override
-	public void close() throws Exception {
-		// TODO Auto-generated method stub
-		if (sessionManager.totalSessions() > 0) {
-			Iterator<Server> itr = sessionManager.iterator();
-			while (itr.hasNext()) {
-				Server server = itr.next();
-				server.closeQuietly();
-				itr.remove();
-			}
-		}
-	}
-
-	@Override
-	public MCPServerConfig getMCPServerConfig() {
-		// TODO Auto-generated method stub
-		return mcpServerConfig;
-	}
-
-	@Override
-	public CompletableFuture<Void> notifyAllClients(ServerNotification notification) {
-		// TODO Auto-generated method stub
-		@SuppressWarnings("unchecked")
-		CompletableFuture<Void>[] allFutures = new CompletableFuture[ sessionManager.totalSessions() /* sessions.size() */];
-		int i = 0;
-		for (Server server : sessionManager.getSessions()  /* sessions.values() */) {
-			allFutures[i++] = server.sendNotification(notification);
-		}
-		return CompletableFuture.allOf(allFutures);
-	}
-
 	@Override
 	public void init() throws ServletException {
 		// TODO Auto-generated method stub
@@ -143,11 +114,15 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 			mcpServerConfig = new DefaultMCPServerConfig(DEFAULT_APPLICATION_NAME, DEFAULT_APPLICATON_VERSION, null).enableAll();
 			
 			FeatureDefinitionManager featureDefinitionManager = new DefaultFeatureDefinitionManager(builder.build().getBeans(), new DefaultFeatureExecutorFactory());
-			featureManager = new FeatureManager(thisServer, featureDefinitionManager);
-			serverFactory = (transport) -> {
-				Server server = new DefaultServer(transport, thisServer.getServerInfo(), thisServer.getServerCapabilities(), thisServer.getInstructions());
-				featureManager.registerServer(server, featureDefinitionManager);
-				return server;
+			featureManager = new MCPServerFeatureManager(mcpServerConfig.getCapabilities(), sessionManager, featureDefinitionManager); //new MCPServerFeatureManager(thisServer, featureDefinitionManager);
+			sessionFactory = (transport) -> {
+				MCPServerSession session = new MCPServerSession(transport, mcpServerConfig.getServerInfo(), mcpServerConfig.getCapabilities(), mcpServerConfig.getInstructions());
+				featureManager.setup(session);
+				session.setCloseCallback(() -> {
+					LOGGER.info("Client Disconnected: " + transport.getSessionId());
+				    sessionManager.removeSession(transport.getSessionId());
+				});
+				return session;
 			};
 		} catch (ScanningException e) {
 			// TODO Auto-generated catch block
@@ -158,7 +133,14 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 	@Override
 	public void destroy() {
 		// TODO Auto-generated method stub
-		thisServer.closeQuietly(); //Weird magic, but it will call the this.close(), so no stress needed here.
+		if (sessionManager.totalSessions() > 0) {
+			Iterator<MCPServerSession> itr = sessionManager.iterator();
+			while (itr.hasNext()) {
+				MCPServerSession session = itr.next();
+				session.closeQuietly();
+				itr.remove();
+			}
+		}
 	}
 
 	@Override
@@ -168,11 +150,8 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 	}
 	
 	@Override
-	public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
+	public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		HttpServletRequest request = (HttpServletRequest) req;
-        HttpServletResponse response = (HttpServletResponse) res;
-        
         String requestMethod = request.getMethod();
         if (!ALLOWED_HTTP_METHODS.contains(requestMethod)) {
         	writeResponse(response, HttpServletResponse.SC_METHOD_NOT_ALLOWED, createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Method not allowed."));
@@ -180,7 +159,7 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
         	return ;
         }
         
-        super.service(req, res);
+        super.service(request, response);
 	}
 
 	@Override
@@ -199,13 +178,13 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 			return ;
 		}
 		
-		Server server = sessionManager.getSession(sessionIdOptional.get());
-		if (server == null) {
+		MCPServerSession session = sessionManager.getSession(sessionIdOptional.get());
+		if (session == null) {
 			writeResponse(response, HttpServletResponse.SC_NOT_FOUND, createJSONRPCError(ErrorCodes.REQUEST_TIMEOUT, "Session not found"));
 			return ;
 		}
 		
-		StreamableHTTPServerTransport serverTransport = (StreamableHTTPServerTransport) server.getTransport();
+		StreamableHTTPServerTransport serverTransport = (StreamableHTTPServerTransport) session.getTransport();
 		serverTransport.handleHttpGetRequest(request, response);
 	}
 
@@ -220,29 +199,33 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 		
 		String contentType = request.getHeader("Content-Type");
 		if (contentType == null || !contentType.contains("application/json")) {
-			writeResponse(response, HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Unsupported Media Type: Content-Type must be application/json"));
+			writeResponse(response, HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Unsupported Media Type: ContentBlock-Type must be application/json"));
 			return ;
 		}
 		
 		StreamableHTTPServerTransport transport = null;
 		String sessionId = request.getHeader(MCP_SESSION_ID_HTTP_HEADER_NAME);
 		if (Strings.isNullOrEmpty(sessionId)) {
-			transport = new StreamableHTTPServerTransport(sessionIdGenerator.get(), false, null, (String newSessionId, StreamableHTTPServerTransport streamableTransport) -> { 
-				Server server = serverFactory.create(streamableTransport);
-				server.setCloseCallback(() -> sessionManager.removeSession(newSessionId));
-				sessionManager.addSession(newSessionId, server);
-				server.connect();
-			});
-			transport.setRequestTimeout(thisServer.getRequestTimeout());
+			final MCPServerSession[] sessionHolder = new MCPServerSession[1];
+			sessionHolder[0] = sessionFactory.create(new StreamableHTTPServerTransport(sessionIdGenerator.get(), false, eventStore, (String newSessionId) -> {
+				LOGGER.info("Session initialized with ID: " + newSessionId);
+				sessionManager.addSession(newSessionId, sessionHolder[0]);
+			}));
+			
+			transport = (StreamableHTTPServerTransport) sessionHolder[0].getTransport();
+//			transport.setRequestTimeout(thisServer.getRequestTimeout());
 			transport.setExecutor(managedExecutorService);
+			
+			sessionHolder[0].connect();
+			mcpContextFactory.getMCPContext(mcpServerConfig, featureManager, featureManager, featureManager, sessionHolder[0]);
 		} else {
-			Server server = sessionManager.getSession(sessionId);
-			if (server == null) {
+			MCPServerSession session = sessionManager.getSession(sessionId);
+			if (session == null) {
 				writeResponse(response, HttpServletResponse.SC_NOT_FOUND, createJSONRPCError(ErrorCodes.REQUEST_TIMEOUT, "Session not found"));
 				return ;
 			}
 			
-			transport = (StreamableHTTPServerTransport) server.getTransport();
+			transport = (StreamableHTTPServerTransport) session.getTransport();
 		}
 		
 		if (transport != null) transport.handleHttpPostRequest(request, response);
@@ -254,13 +237,13 @@ public class StreamableHTTPServerServlet extends HttpServlet implements MCPServe
 		Optional<String> sessionIdOptional = validateSession(request, response);
 		if (sessionIdOptional.isEmpty()) return ;
 		
-		Server server = sessionManager.getSession(sessionIdOptional.get());
-		if (server == null) {
+		MCPServerSession session = sessionManager.getSession(sessionIdOptional.get());
+		if (session == null) {
 			writeResponse(response, HttpServletResponse.SC_NOT_FOUND, createJSONRPCError(ErrorCodes.REQUEST_TIMEOUT, "Session not found"));
 			return ;
 		}
 		
-		server.closeQuietly();
+		session.closeQuietly();
 		sessionManager.removeSession(sessionIdOptional.get());
 		writeResponse(response, HttpServletResponse.SC_OK, TEXT_PLAIN, "OK");
 	}

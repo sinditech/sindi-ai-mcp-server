@@ -1,15 +1,15 @@
 package za.co.sindi.ai.mcp.server.features.tools;
 
+import za.co.sindi.ai.mcp.server.spi.Argument;
 import za.co.sindi.ai.mcp.server.spi.Tool;
-import za.co.sindi.ai.mcp.server.spi.ToolArgument;
 
 public class MCPCalculator {
 
     @Tool(description = "Performs basic arithmetic operations (add, subtract, multiply, divide)")
     public String operation(
-            @ToolArgument(description = "The operation to perform - add, subtract, multiply, divide") String operation, 
-            @ToolArgument(description = "The first operand") double a, 
-            @ToolArgument(description = "The second operand") double b) {
+            @Argument(description = "The operation to perform - add, subtract, multiply, divide") String operation, 
+            @Argument(description = "The first operand") double a, 
+            @Argument(description = "The second operand") double b) {
         return processOperation(a, b, operation);
     }
 

@@ -10,7 +10,7 @@ import za.co.sindi.ai.mcp.shared.ServerTransport;
  * @since 06 May 2025
  */
 @FunctionalInterface
-public interface ServerFactory {
+public interface SessionFactory {
 
-	public Server create(final ServerTransport transport);
+	public MCPServerSession create(final ServerTransport transport);
 }
