@@ -11,7 +11,7 @@ import java.util.Map;
 
 import za.co.sindi.ai.mcp.schema.Tool;
 import za.co.sindi.ai.mcp.schema.Tool.InputSchema;
-import za.co.sindi.ai.mcp.schema.Tool.InputSchema.PropertySchema;
+import za.co.sindi.ai.mcp.schema.Tool.PropertySchema;
 import za.co.sindi.ai.mcp.server.runtime.impl.JSONDataTypes;
 import za.co.sindi.commons.utils.Strings;
 
@@ -26,6 +26,7 @@ public class ToolDefinition implements FeatureDefinition<Tool>, Serializable {
 	private Class<?> methodReturnType;
 	
 	private String annotationName;
+	private String annotationTitle;
 	private String annotationDescription;
 	
 	private List<ToolArgumentInfo> arguments;
@@ -35,16 +36,18 @@ public class ToolDefinition implements FeatureDefinition<Tool>, Serializable {
 	 * @param methodName
 	 * @param methodReturnType
 	 * @param annotationName
+	 * @param annotationTitle
 	 * @param annotationDescription
 	 * @param arguments
 	 */
 	public ToolDefinition(Class<?> methodDeclaringClass, String methodName, Class<?> methodReturnType,
-			String annotationName, String annotationDescription, List<ToolArgumentInfo> arguments) {
+			String annotationName, String annotationTitle, String annotationDescription, List<ToolArgumentInfo> arguments) {
 		super();
 		this.methodDeclaringClass = methodDeclaringClass;
 		this.methodName = methodName;
 		this.methodReturnType = methodReturnType;
 		this.annotationName = annotationName;
+		this.annotationTitle = annotationTitle;
 		this.annotationDescription = annotationDescription;
 		this.arguments = arguments;
 	}
@@ -78,6 +81,13 @@ public class ToolDefinition implements FeatureDefinition<Tool>, Serializable {
 	}
 
 	/**
+	 * @return the annotationTitle
+	 */
+	public String getAnnotationTitle() {
+		return annotationTitle;
+	}
+
+	/**
 	 * @return the annotationDescription
 	 */
 	public String getAnnotationDescription() {
@@ -96,6 +106,7 @@ public class ToolDefinition implements FeatureDefinition<Tool>, Serializable {
 		// TODO Auto-generated method stub
 		Tool tool = new Tool();
 		tool.setName(Strings.isNullOrEmpty(annotationName) ? methodName : annotationName);
+		tool.setTitle(Strings.isNullOrEmpty(annotationTitle) ? null : annotationTitle);
 		tool.setDescription(annotationDescription);
 		
 		if (arguments != null) {

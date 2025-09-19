@@ -18,6 +18,8 @@ public @interface ResourceTemplate {
 	
 	String name() default "";
 	
+	String title() default "";
+	
 	String description() default "";
 	
 	String uri() default "";

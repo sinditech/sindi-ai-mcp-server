@@ -20,6 +20,7 @@ public class ResourceTemplatesDefinition implements FeatureDefinition<ResourceTe
 	
 	private String annotationUriTemplate;
 	private String annotationName;
+	private String annotationTitle;
 	private String annotationDescription;
 	private String annotationMimeType;
 	
@@ -29,17 +30,19 @@ public class ResourceTemplatesDefinition implements FeatureDefinition<ResourceTe
 	 * @param methodReturnType
 	 * @param annotationUriTemplate
 	 * @param annotationName
+	 * @param annotationTitle
 	 * @param annotationDescription
 	 * @param annotationMimeType
 	 */
 	public ResourceTemplatesDefinition(Class<?> methodDeclaringClass, String methodName, Class<?> methodReturnType,
-			String annotationUriTemplate, String annotationName, String annotationDescription, String annotationMimeType) {
+			String annotationUriTemplate, String annotationName, String annotationTitle, String annotationDescription, String annotationMimeType) {
 		super();
 		this.methodDeclaringClass = methodDeclaringClass;
 		this.methodName = methodName;
 		this.methodReturnType = methodReturnType;
 		this.annotationUriTemplate = annotationUriTemplate;
 		this.annotationName = annotationName;
+		this.annotationTitle = annotationTitle;
 		this.annotationDescription = annotationDescription;
 		this.annotationMimeType = annotationMimeType;
 	}
@@ -80,6 +83,13 @@ public class ResourceTemplatesDefinition implements FeatureDefinition<ResourceTe
 	}
 
 	/**
+	 * @return the annotationTitle
+	 */
+	public String getAnnotationTitle() {
+		return annotationTitle;
+	}
+
+	/**
 	 * @return the annotationDescription
 	 */
 	public String getAnnotationDescription() {
@@ -102,6 +112,7 @@ public class ResourceTemplatesDefinition implements FeatureDefinition<ResourceTe
 		if (Strings.isNullOrEmpty(annotationName)) resourceTemplate.setName(methodName);
 		resourceTemplate.setDescription(annotationDescription);
 		resourceTemplate.setMimeType(annotationMimeType);
+		resourceTemplate.setTitle(Strings.isNullOrEmpty(annotationTitle) ? null : annotationTitle);
 		
 		return resourceTemplate;
 	}

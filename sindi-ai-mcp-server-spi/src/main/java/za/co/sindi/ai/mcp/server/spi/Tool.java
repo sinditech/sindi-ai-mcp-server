@@ -16,12 +16,19 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Tool {
 	
-	 /**
+	/**
      * Name of the tool. If not provided, method name will be used.
      *
      * @return name of the tool.
      */
 	String name() default "";
+	
+	/**
+     * Title of the tool.
+     *
+     * @return title of the tool.
+     */
+	String title() default "";
 	
 	/**
      * Description of the tool.

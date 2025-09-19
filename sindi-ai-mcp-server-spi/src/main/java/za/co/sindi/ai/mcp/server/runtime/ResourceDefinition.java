@@ -20,6 +20,7 @@ public class ResourceDefinition implements FeatureDefinition<Resource>, Serializ
 	
 	private String annotationUri;
 	private String annotationName;
+	private String annotationTitle;
 	private String annotationDescription;
 	private String annotationMimeType;
 	
@@ -29,17 +30,19 @@ public class ResourceDefinition implements FeatureDefinition<Resource>, Serializ
 	 * @param methodReturnType
 	 * @param annotationUri
 	 * @param annotationName
+	 * @param annotationTitle
 	 * @param annotationDescription
 	 * @param annotationMimeType
 	 */
 	public ResourceDefinition(Class<?> methodDeclaringClass, String methodName, Class<?> methodReturnType,
-			String annotationUri, String annotationName, String annotationDescription, String annotationMimeType) {
+			String annotationUri, String annotationName, String annotationTitle, String annotationDescription, String annotationMimeType) {
 		super();
 		this.methodDeclaringClass = methodDeclaringClass;
 		this.methodName = methodName;
 		this.methodReturnType = methodReturnType;
 		this.annotationUri = annotationUri;
 		this.annotationName = annotationName;
+		this.annotationTitle = annotationTitle;
 		this.annotationDescription = annotationDescription;
 		this.annotationMimeType = annotationMimeType;
 	}
@@ -80,6 +83,13 @@ public class ResourceDefinition implements FeatureDefinition<Resource>, Serializ
 	}
 
 	/**
+	 * @return the annotationTitle
+	 */
+	public String getAnnotationTitle() {
+		return annotationTitle;
+	}
+
+	/**
 	 * @return the annotationDescription
 	 */
 	public String getAnnotationDescription() {
@@ -102,6 +112,7 @@ public class ResourceDefinition implements FeatureDefinition<Resource>, Serializ
 		if (Strings.isNullOrEmpty(annotationName)) resource.setName(methodName);
 		resource.setDescription(annotationDescription);
 		resource.setMimeType(annotationMimeType);
+		resource.setTitle(Strings.isNullOrEmpty(annotationTitle) ? null : annotationTitle);
 		
 		return resource;
 	}

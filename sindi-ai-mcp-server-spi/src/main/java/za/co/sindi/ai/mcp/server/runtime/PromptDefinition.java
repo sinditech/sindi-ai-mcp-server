@@ -21,6 +21,7 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 	private Class<?> methodReturnType;
 	
 	private String annotationName;
+	private String annotationTitle;
 	private String annotationDescription;
 	
 	private List<PromptArgumentInfo> arguments;
@@ -30,16 +31,18 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 	 * @param methodName
 	 * @param methodReturnType
 	 * @param annotationName
+	 * @param annotationTitle
 	 * @param annotationDescription
 	 * @param arguments
 	 */
 	public PromptDefinition(Class<?> methodDeclaringClass, String methodName, Class<?> methodReturnType,
-			String annotationName, String annotationDescription, List<PromptArgumentInfo> arguments) {
+			String annotationName, String annotationTitle, String annotationDescription, List<PromptArgumentInfo> arguments) {
 		super();
 		this.methodDeclaringClass = methodDeclaringClass;
 		this.methodName = methodName;
 		this.methodReturnType = methodReturnType;
 		this.annotationName = annotationName;
+		this.annotationTitle = annotationTitle;
 		this.annotationDescription = annotationDescription;
 		this.arguments = arguments;
 	}
@@ -73,6 +76,13 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 	}
 
 	/**
+	 * @return the annotationTitle
+	 */
+	public String getAnnotationTitle() {
+		return annotationTitle;
+	}
+
+	/**
 	 * @return the annotationDescription
 	 */
 	public String getAnnotationDescription() {
@@ -91,11 +101,12 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 		// TODO Auto-generated method stub
 		Prompt prompt = new Prompt();
 		prompt.setName(Strings.isNullOrEmpty(annotationName) ? methodName : annotationName);
+		prompt.setTitle(Strings.isNullOrEmpty(annotationTitle) ? null : annotationTitle);
 		prompt.setDescription(annotationDescription);
 		
 		if (arguments != null) {
 			List<PromptArgument> promptArguments = arguments.stream().map(argument -> {
-				PromptArgument pa = new PromptArgument(argument.getAnnotationName(), argument.getAnnotationDescription(), argument.isRequired());
+				PromptArgument pa = new PromptArgument(argument.getAnnotationName(), argument.getAnnotationTitle(), argument.getAnnotationDescription(), argument.isRequired());
 				if (Strings.isNullOrEmpty(argument.getAnnotationName()))
 					pa.setName(argument.getParameterName());
 				return pa;
@@ -112,6 +123,7 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 		private String parameterName;
 		
 		private String annotationName;
+		private String annotationTitle;
 		private String annotationDescription;
 		private boolean required;
 		
@@ -119,15 +131,17 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 		 * @param parameterType
 		 * @param parameterName
 		 * @param annotationName
+		 * @param annotationTitle
 		 * @param annotationDescription
 		 * @param required
 		 */
-		public PromptArgumentInfo(Class<?> parameterType, String parameterName, String annotationName,
+		public PromptArgumentInfo(Class<?> parameterType, String parameterName, String annotationName, String annotationTitle,
 				String annotationDescription, boolean required) {
 			super();
 			this.parameterType = parameterType;
 			this.parameterName = parameterName;
 			this.annotationName = annotationName;
+			this.annotationTitle = annotationTitle;
 			this.annotationDescription = annotationDescription;
 			this.required = required;
 		}
@@ -151,6 +165,13 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 		 */
 		public String getAnnotationName() {
 			return annotationName;
+		}
+
+		/**
+		 * @return the annotationTitle
+		 */
+		public String getAnnotationTitle() {
+			return annotationTitle;
 		}
 
 		/**

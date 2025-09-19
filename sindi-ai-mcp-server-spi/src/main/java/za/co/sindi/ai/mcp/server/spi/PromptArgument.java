@@ -13,12 +13,14 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Prompt {
+@Target(ElementType.PARAMETER)
+public @interface PromptArgument {
 	
 	String name() default "";
 	
 	String title() default "";
 	
 	String description() default "";
+	
+	boolean required() default false;
 }

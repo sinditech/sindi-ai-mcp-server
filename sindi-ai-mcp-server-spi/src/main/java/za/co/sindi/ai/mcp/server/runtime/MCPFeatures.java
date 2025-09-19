@@ -14,12 +14,14 @@ import java.util.logging.Logger;
 import za.co.sindi.ai.mcp.server.runtime.ElicitDefinition.ElicitArgumentInfo;
 import za.co.sindi.ai.mcp.server.runtime.PromptDefinition.PromptArgumentInfo;
 import za.co.sindi.ai.mcp.server.runtime.ToolDefinition.ToolArgumentInfo;
-import za.co.sindi.ai.mcp.server.spi.Argument;
 import za.co.sindi.ai.mcp.server.spi.Elicit;
+import za.co.sindi.ai.mcp.server.spi.ElicitArgument;
 import za.co.sindi.ai.mcp.server.spi.Prompt;
+import za.co.sindi.ai.mcp.server.spi.PromptArgument;
 import za.co.sindi.ai.mcp.server.spi.Resource;
 import za.co.sindi.ai.mcp.server.spi.ResourceTemplate;
 import za.co.sindi.ai.mcp.server.spi.Tool;
+import za.co.sindi.ai.mcp.server.spi.ToolArgument;
 import za.co.sindi.commons.utils.Annotations;
 
 /**
@@ -105,7 +107,7 @@ public class MCPFeatures {
 		ToolDefinition toolDefinition = null;
 		Tool tool = method.getAnnotation(Tool.class);
 		if (tool != null) {
-			toolDefinition = new ToolDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), tool.name(), tool.description(), createToolArgumentInfo(method));
+			toolDefinition = new ToolDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), tool.name(), tool.title(), tool.description(), createToolArgumentInfo(method));
 		}
 		return toolDefinition;
 	}
@@ -117,7 +119,7 @@ public class MCPFeatures {
 			parameters = new ArrayList<>();
 			for (int index = 0; index < parameterCount; index++) {
 				Parameter parameter = method.getParameters()[index];
-				Argument argument = parameter.getAnnotation(Argument.class);
+				ToolArgument argument = parameter.getAnnotation(ToolArgument.class);
 				ToolArgumentInfo parameterDefinition = new ToolArgumentInfo(method.getParameterTypes()[index], parameter.getName(), argument.name(), argument.description(), argument.required());
 				parameters.add(parameterDefinition);
 			}
@@ -131,7 +133,7 @@ public class MCPFeatures {
 		if (LANGCHAIN4J_TOOL_ANNOTATION_CLASS != null) {
 			Annotation langchain4JTool = method.getAnnotation(LANGCHAIN4J_TOOL_ANNOTATION_CLASS);
 			if (langchain4JTool != null) {
-				toolDefinition = new ToolDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), Annotations.getAnnotationValue(langchain4JTool, "name"), Annotations.getAnnotationValue(langchain4JTool, "value"), createToolArgumentInfoFromLangChain4J(method));
+				toolDefinition = new ToolDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), Annotations.getAnnotationValue(langchain4JTool, "name"), null, Annotations.getAnnotationValue(langchain4JTool, "value"), createToolArgumentInfoFromLangChain4J(method));
 			}
 		}
 		return toolDefinition;
@@ -159,7 +161,7 @@ public class MCPFeatures {
 		PromptDefinition promptDefinition = null;
 		Prompt prompt = method.getAnnotation(Prompt.class);
 		if (prompt != null) {
-			promptDefinition = new PromptDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), prompt.name(), prompt.description(), createPromptArgumenInfo(method));
+			promptDefinition = new PromptDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), prompt.name(), prompt.title(), prompt.description(), createPromptArgumenInfo(method));
 		}
 		return promptDefinition;
 	}
@@ -171,8 +173,8 @@ public class MCPFeatures {
 			parameters = new ArrayList<>();
 			for (int index = 0; index < parameterCount; index++) {
 				Parameter parameter = method.getParameters()[index];
-				Argument argument = parameter.getAnnotation(Argument.class);
-				PromptArgumentInfo parameterDefinition = new PromptArgumentInfo(method.getParameterTypes()[index], parameter.getName(), argument.name(), argument.description(), argument.required());
+				PromptArgument argument = parameter.getAnnotation(PromptArgument.class);
+				PromptArgumentInfo parameterDefinition = new PromptArgumentInfo(method.getParameterTypes()[index], parameter.getName(), argument.name(), argument.title(), argument.description(), argument.required());
 				parameters.add(parameterDefinition);
 			}
 		}
@@ -184,7 +186,7 @@ public class MCPFeatures {
 		ResourceDefinition resourceDefinition = null;
 		Resource resource = method.getAnnotation(Resource.class);
 		if (resource != null) {
-			resourceDefinition = new ResourceDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), resource.uri(), resource.name(), resource.description(), resource.mimeType());
+			resourceDefinition = new ResourceDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), resource.uri(), resource.name(), resource.title(), resource.description(), resource.mimeType());
 		}
 		return resourceDefinition;
 	}
@@ -193,7 +195,7 @@ public class MCPFeatures {
 		ResourceTemplatesDefinition resourceTemplatesDefinition = null;
 		ResourceTemplate resourceTemplate = method.getAnnotation(ResourceTemplate.class);
 		if (resourceTemplate != null) {
-			resourceTemplatesDefinition = new ResourceTemplatesDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), resourceTemplate.uri(), resourceTemplate.name(), resourceTemplate.description(), resourceTemplate.mimeType());
+			resourceTemplatesDefinition = new ResourceTemplatesDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), resourceTemplate.uri(), resourceTemplate.name(), resourceTemplate.title(), resourceTemplate.description(), resourceTemplate.mimeType());
 		}
 		return resourceTemplatesDefinition;
 	}
@@ -214,7 +216,7 @@ public class MCPFeatures {
 			parameters = new ArrayList<>();
 			for (int index = 0; index < parameterCount; index++) {
 				Parameter parameter = method.getParameters()[index];
-				Argument argument = parameter.getAnnotation(Argument.class);
+				ElicitArgument argument = parameter.getAnnotation(ElicitArgument.class);
 				ElicitArgumentInfo parameterDefinition = new ElicitArgumentInfo(method.getParameterTypes()[index], parameter.getName(), argument.name(), argument.description(), argument.required());
 				parameters.add(parameterDefinition);
 			}
