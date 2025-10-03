@@ -3,6 +3,10 @@
  */
 package za.co.sindi.ai.mcp.server.runtime;
 
+import java.util.concurrent.CompletableFuture;
+
+import za.co.sindi.ai.mcp.schema.ElicitRequest.ElicitRequestParameters;
+import za.co.sindi.ai.mcp.schema.ElicitResult;
 import za.co.sindi.ai.mcp.schema.Implementation;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
 import za.co.sindi.ai.mcp.server.PromptManager;
@@ -46,4 +50,8 @@ public abstract class MCPContext {
 	public abstract RootsProvider getRootsProvider();
 	
 	public abstract MCPLogger getCurrentLogger();
+	
+	public abstract CompletableFuture<ElicitResult> elicitInput(final ElicitRequestParameters requestParameters);
+	
+	public abstract void release();
 }

@@ -186,11 +186,11 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 				        }
 				        
 				        if (enableJsonResponse) {
-				        	response.setContentType(StreamableHTTPServerServlet.APPLICATION_JSON);
-				    		response.setCharacterEncoding(StreamableHTTPServerServlet.UTF_8);
+				        	response.setContentType(DefaultStreamableHttpMCPServerProcessor.APPLICATION_JSON);
+				    		response.setCharacterEncoding(BaseHttpMCPServerProcessor.UTF_8);
 				    		
 				    		if (!Strings.isNullOrEmpty(sessionId)) {
-				    			response.setHeader(StreamableHTTPServerServlet.MCP_SESSION_ID_HTTP_HEADER_NAME, sessionId);
+				    			response.setHeader(DefaultStreamableHttpMCPServerProcessor.MCP_SESSION_ID_HTTP_HEADER_NAME, sessionId);
 				    		}
 				    		
 				    		JSONRPCMessage[] messages = relatedIds.stream().map(id -> requestResponseMap.get(id)).toArray(size -> new JSONRPCMessage[size]);
@@ -254,7 +254,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 			// Check if there's already an active standalone SSE stream for this session
 			if (streamMapping.containsKey(STANDALONE_SSE_STREAM_ID)) {
 			  // Only one GET SSE stream is allowed per session
-				StreamableHTTPServerServlet.writeResponse(response, HttpServletResponse.SC_CONFLICT, StreamableHTTPServerServlet.createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Conflict: Only one SSE stream is allowed per session"));
+				DefaultStreamableHttpMCPServerProcessor.writeResponse(response, HttpServletResponse.SC_CONFLICT, DefaultStreamableHttpMCPServerProcessor.createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Conflict: Only one SSE stream is allowed per session"));
 				return ;
 			}
 			
@@ -321,12 +321,12 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 			if (isInitializationRequest) {
 				if (initialized.get() && !Strings.isNullOrEmpty(sessionId)) {
 					//Server was already initalised....
-					StreamableHTTPServerServlet.writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, StreamableHTTPServerServlet.createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Invalid Request: Server already initialized."));
+					DefaultStreamableHttpMCPServerProcessor.writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, DefaultStreamableHttpMCPServerProcessor.createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Invalid Request: Server already initialized."));
 					return ;
 				}
 				
 				if (messages.length > 1) {
-					StreamableHTTPServerServlet.writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, StreamableHTTPServerServlet.createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Invalid Request: Only one initialization request is allowed."));
+					DefaultStreamableHttpMCPServerProcessor.writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, DefaultStreamableHttpMCPServerProcessor.createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Invalid Request: Only one initialization request is allowed."));
 					return ;
 				}
 				
@@ -341,10 +341,10 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 		        // clients using the Streamable HTTP transport MUST include it 
 		        // in the Mcp-Session-Id header on all of their subsequent HTTP requests.
 				
-				Optional<String> sessionIdOptional = StreamableHTTPServerServlet.validateSession(request, response);
+				Optional<String> sessionIdOptional = DefaultStreamableHttpMCPServerProcessor.validateSession(request, response);
 				if (sessionIdOptional.isEmpty()) return ;
 				
-				if (!StreamableHTTPServerServlet.validateProtocolVersion(request, response)) return ;
+				if (!DefaultStreamableHttpMCPServerProcessor.validateProtocolVersion(request, response)) return ;
 			}
 			
 			boolean hasRequests = Arrays.stream(messages).anyMatch(message -> message instanceof JSONRPCRequest);
@@ -407,7 +407,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			try {
-				StreamableHTTPServerServlet.writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, StreamableHTTPServerServlet.createJSONRPCError(ErrorCodes.PARSE_ERROR, "Parse error.", e.getLocalizedMessage()));
+				DefaultStreamableHttpMCPServerProcessor.writeResponse(response, HttpServletResponse.SC_BAD_REQUEST, DefaultStreamableHttpMCPServerProcessor.createJSONRPCError(ErrorCodes.PARSE_ERROR, "Parse error.", e.getLocalizedMessage()));
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 //				e1.printStackTrace();
@@ -479,13 +479,13 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 	
 	private AsyncContext createAsyncContext(final HttpServletRequest request, final HttpServletResponse response) {
 		response.setContentType("text/event-stream");
-		response.setCharacterEncoding(StreamableHTTPServerServlet.UTF_8);
+		response.setCharacterEncoding(BaseHttpMCPServerProcessor.UTF_8);
 		response.setHeader("Cache-Control", "no-cache");
 		response.setHeader("Connection", "keep-alive");
 		response.setHeader("Access-Control-Allow-Origin", "*");
 		
 		if (!Strings.isNullOrEmpty(sessionId)) {
-			response.setHeader(StreamableHTTPServerServlet.MCP_SESSION_ID_HTTP_HEADER_NAME, sessionId);
+			response.setHeader(DefaultStreamableHttpMCPServerProcessor.MCP_SESSION_ID_HTTP_HEADER_NAME, sessionId);
 		}
 
 		final AsyncContext asyncContext = request.startAsync();

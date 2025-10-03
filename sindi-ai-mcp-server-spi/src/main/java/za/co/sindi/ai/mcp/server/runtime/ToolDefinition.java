@@ -109,11 +109,11 @@ public class ToolDefinition implements FeatureDefinition<Tool>, Serializable {
 		tool.setTitle(Strings.isNullOrEmpty(annotationTitle) ? null : annotationTitle);
 		tool.setDescription(annotationDescription);
 		
+		InputSchema inputSchema = new InputSchema();
+		inputSchema.setType("object");
+		tool.setInputSchema(inputSchema);
+		
 		if (arguments != null) {
-			InputSchema inputSchema = new InputSchema();
-			inputSchema.setType("object");
-			tool.setInputSchema(inputSchema);
-			
 			Map<String, PropertySchema> properties = new LinkedHashMap<>();
 			List<String> requiredParams = new ArrayList<>();
 			arguments.stream().forEach(argument -> {
@@ -128,7 +128,6 @@ public class ToolDefinition implements FeatureDefinition<Tool>, Serializable {
 			});
 			inputSchema.setProperties(properties);
 			inputSchema.setRequired(requiredParams.toArray(new String[requiredParams.size()]));
-			tool.setInputSchema(inputSchema);
 		}
 		
 		return tool;

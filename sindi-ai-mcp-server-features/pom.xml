@@ -29,5 +29,14 @@
 			<groupId>za.co.sindi</groupId>
 			<artifactId>sindi-ai-mcp-server-spi</artifactId>
 		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/org.eclipse.parsson/parsson -->
+		<!--
+		<dependency>
+		    <groupId>org.eclipse.parsson</groupId>
+		    <artifactId>parsson</artifactId>
+		    <version>1.1.6</version>
+		</dependency>
+		-->
 	</dependencies>
 </project>

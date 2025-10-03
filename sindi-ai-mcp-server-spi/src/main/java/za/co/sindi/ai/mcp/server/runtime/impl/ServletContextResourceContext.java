@@ -1,7 +1,7 @@
 /**
  * 
  */
-package za.co.sindi.ai.mcp.server.mcp.scanner;
+package za.co.sindi.ai.mcp.server.runtime.impl;
 
 import java.io.InputStream;
 import java.net.MalformedURLException;

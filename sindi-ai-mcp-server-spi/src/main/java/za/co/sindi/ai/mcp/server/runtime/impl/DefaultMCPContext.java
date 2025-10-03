@@ -3,6 +3,10 @@
  */
 package za.co.sindi.ai.mcp.server.runtime.impl;
 
+import java.util.concurrent.CompletableFuture;
+
+import za.co.sindi.ai.mcp.schema.ElicitRequest.ElicitRequestParameters;
+import za.co.sindi.ai.mcp.schema.ElicitResult;
 import za.co.sindi.ai.mcp.schema.Implementation;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
 import za.co.sindi.ai.mcp.server.MCPServerSession;
@@ -32,7 +36,7 @@ public class DefaultMCPContext extends MCPContext {
 	private DefaultMCPContext() {
 		super();
 		// TODO Auto-generated constructor stub
-		MCPContext.setCurrentInstance(this);
+		setCurrentInstance(this);
 	}
 
 	/**
@@ -85,12 +89,29 @@ public class DefaultMCPContext extends MCPContext {
 	@Override
 	public RootsProvider getRootsProvider() {
 		// TODO Auto-generated method stub
-		return new CurrentSessionRootsProvider(currentServerSession);
+		return new DefaultRootsProvider(currentServerSession);
 	}
 
 	@Override
 	public MCPLogger getCurrentLogger() {
 		// TODO Auto-generated method stub
 		return currentServerSession.getLogger();
+	}
+
+	@Override
+	public CompletableFuture<ElicitResult> elicitInput(ElicitRequestParameters requestParameters) {
+		// TODO Auto-generated method stub
+		return currentServerSession.elicitInput(requestParameters);
+	}
+
+	@Override
+	public void release() {
+		// TODO Auto-generated method stub
+		serverConfig = null;
+		promptManager = null;
+		resourceManager = null;
+		toolManager = null;
+		currentServerSession = null;
+		setCurrentInstance(null);
 	}
 }

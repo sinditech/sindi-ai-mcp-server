@@ -34,6 +34,8 @@ public interface BeanDefinitionRegistry {
 		
 		public B fromInstances(final Object ...instances);
 		
+		public B fromBeanInstance(final BeanInstance beanInstance);
+		
 		public BDR build();
 	}
 }

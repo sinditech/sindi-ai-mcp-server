@@ -3,7 +3,6 @@
  */
 package za.co.sindi.ai.mcp.server.runtime;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -44,8 +43,9 @@ public abstract class AbstractFeatureExecutor<REQ extends Request, T, FD extends
 		Method method = findMethod(request);
 		Object[] arguments = prepareArguments(method, request);
 		try {
-			return method.invoke(bean.getInstance(), arguments);
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+//			return method.invoke(bean.getInstance(), arguments);
+			return bean.getBeanInstance().invoke(method, arguments);
+		} catch (Throwable e) {
 			// TODO Auto-generated catch block
 			throw new FeatureExecutionException(e);
 		}

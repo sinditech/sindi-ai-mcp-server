@@ -30,9 +30,9 @@ abstract class CDIBean<T> implements Bean<T>, PassivationCapable, Serializable {
 	private Set<Annotation> qualifiers = Set.of(new Default.Literal(), new Any.Literal());
 	private Class<? extends Annotation> scope = Dependent.class;
 	private String name;
-	private Set<Class<? extends Annotation>> stereotypes;
+	private Set<Class<? extends Annotation>> stereotypes = Collections.emptySet();
 	private boolean alternative = false;
-	private String id;
+	private String id = this.getClass().getName();
 	private Class<T> beanClass;
 	private Set<InjectionPoint> injectionPoints = Collections.emptySet();
 	private Function<CreationalContext<T>, T> producer;

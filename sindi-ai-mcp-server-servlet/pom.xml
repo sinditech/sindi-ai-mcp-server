@@ -24,16 +24,6 @@
 		<!--Strictly for OpenLiberty-->
 		<liberty.env.ENGINE_CACHE_DIR>${project.build.directory}/liberty/wlp/usr/shared/resources/lib/</liberty.env.ENGINE_CACHE_DIR>
 	</properties>
-	
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>za.co.sindi</groupId>
-  				<artifactId>sindi-resource-scanner</artifactId>
-  				<version>0.0.1-SNAPSHOT</version>
-  			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/jakarta.platform/jakarta.jakartaee-api -->
@@ -55,11 +45,6 @@
 		<dependency>
 			<groupId>za.co.sindi</groupId>
 			<artifactId>sindi-ai-mcp-server-features</artifactId>
-		</dependency>
-		
-		<dependency>
-			<groupId>za.co.sindi</groupId>
-			<artifactId>sindi-resource-scanner</artifactId>
 		</dependency>
 	</dependencies>
 	

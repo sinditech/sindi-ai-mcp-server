@@ -21,13 +21,14 @@ public @interface MCPServer {
 	String name();
 	String version();
 	String instructions();
-	boolean enableLogging();
-	boolean enableCompletions();
-	boolean enablePrompts();
-	boolean notifyPromptListChanged();
-	boolean enableResources();
-	boolean notifyResourceListChanged();
-	boolean enableTools();
-	boolean notifyToolListChanged();
+	boolean enableLogging() default false;
+	boolean enableCompletions() default false;
+	boolean enablePrompts() default false;
+	boolean notifyPromptListChanged() default false;
+	boolean enableResources() default false;
+	boolean notifyResourceListChanged() default false;
+	boolean enableTools() default false;
+	boolean notifyToolListChanged() default false;
 	LoggingLevel defaultLoggingLevel() default LoggingLevel.DEBUG;
+	boolean enableAllFeatures() default false;
 }

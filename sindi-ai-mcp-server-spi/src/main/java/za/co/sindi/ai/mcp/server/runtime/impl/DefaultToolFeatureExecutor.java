@@ -35,11 +35,11 @@ public class DefaultToolFeatureExecutor extends AbstractFeatureExecutor<CallTool
 		// TODO Auto-generated method stub
 		String name = request.getParameters().getName();
 		if (name.equals(feature.getAnnotationName())) name = feature.getMethodName();
-		for (Method method : bean.getBeanClass().getDeclaredMethods()) {
+		for (Method method : bean.getBeanInstance().getInstanceType().getDeclaredMethods()) {
 			if (method.getName().equals(name)) return method;
 		}
 
-		throw new IllegalArgumentException(String.format("Method '%s' is not found in object '%s'", name, bean.getBeanClass().getName()));
+		throw new IllegalArgumentException(String.format("Method '%s' is not found in object '%s'", name, bean.getBeanInstance().getInstanceType().getName()));
 	}
 
 	@Override

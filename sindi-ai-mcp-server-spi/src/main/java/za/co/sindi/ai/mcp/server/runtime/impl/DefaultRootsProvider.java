@@ -14,14 +14,14 @@ import za.co.sindi.ai.mcp.server.Server;
  * @author Buhake Sindi
  * @since 15 September 2025
  */
-public class CurrentSessionRootsProvider implements RootsProvider {
+public class DefaultRootsProvider implements RootsProvider {
 
 	private final Server session;
 	
 	/**
 	 * @param session
 	 */
-	public CurrentSessionRootsProvider(Server session) {
+	public DefaultRootsProvider(Server session) {
 		super();
 		this.session = Objects.requireNonNull(session, "An MCP server session is required");
 	}

@@ -29,15 +29,13 @@ import za.co.sindi.ai.mcp.schema.Resource;
 import za.co.sindi.ai.mcp.schema.ResourceTemplate;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
 import za.co.sindi.ai.mcp.schema.Tool;
+import za.co.sindi.ai.mcp.server.McpServer;
 import za.co.sindi.ai.mcp.server.MCPServerSession;
-import za.co.sindi.ai.mcp.server.PromptManager;
 import za.co.sindi.ai.mcp.server.RegisteredPrompt;
 import za.co.sindi.ai.mcp.server.RegisteredResource;
 import za.co.sindi.ai.mcp.server.RegisteredResourceTemplate;
 import za.co.sindi.ai.mcp.server.RegisteredTool;
-import za.co.sindi.ai.mcp.server.ResourceManager;
 import za.co.sindi.ai.mcp.server.Server;
-import za.co.sindi.ai.mcp.server.ToolManager;
 import za.co.sindi.ai.mcp.server.runtime.FeatureDefinitionManager;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
 import za.co.sindi.ai.mcp.shared.MCPError;
@@ -49,9 +47,9 @@ import za.co.sindi.commons.utils.Strings;
  * @author Buhake Sindi
  * @since 06 May 2025
  */
-public class MCPServerFeatureManager implements PromptManager, ResourceManager, ToolManager {
+public class DefaultMcpServer implements McpServer {
 	
-	private static final Logger LOGGER = Logger.getLogger(MCPServerFeatureManager.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(DefaultMcpServer.class.getName());
 	
 	private final ConcurrentHashMap<String, RegisteredTool> tools = new ConcurrentHashMap<>();
 	
@@ -70,7 +68,7 @@ public class MCPServerFeatureManager implements PromptManager, ResourceManager, 
 	 * @param sessionManager
 	 * @param featureDefinitionManager
 	 */
-	public MCPServerFeatureManager(final ServerCapabilities capabilities, final SessionManager sessionManager, final FeatureDefinitionManager featureDefinitionManager) {
+	public DefaultMcpServer(final ServerCapabilities capabilities, final SessionManager sessionManager, final FeatureDefinitionManager featureDefinitionManager) {
 		super();
 		this.capabilities = Objects.requireNonNull(capabilities, "A MCP server capabilities is required.");
 		this.sessionManager = Objects.requireNonNull(sessionManager, "A MCP session manager required.");
@@ -158,6 +156,7 @@ public class MCPServerFeatureManager implements PromptManager, ResourceManager, 
 		};
 	}
 	
+	@Override
 	public void setup(final MCPServerSession serverSession) {
 		if (serverSession.getCapabilities().getLogging() != null) {
 //			server.addRequestHandler(SetLevelRequest.METHOD_LOGGING_SETLEVEL, setLoggingLevelRequestHandler(server));

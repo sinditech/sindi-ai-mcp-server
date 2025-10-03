@@ -29,5 +29,9 @@
 			<groupId>za.co.sindi</groupId>
 			<artifactId>sindi-ai-mcp</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>za.co.sindi</groupId>
+			<artifactId>sindi-resource-scanner</artifactId>
+		</dependency>
 	</dependencies>
 </project>

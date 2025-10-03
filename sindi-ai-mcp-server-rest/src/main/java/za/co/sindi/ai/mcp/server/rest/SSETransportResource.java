@@ -23,9 +23,9 @@ import jakarta.ws.rs.sse.SseEventSink;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
 import za.co.sindi.ai.mcp.server.MCPServerSession;
 import za.co.sindi.ai.mcp.server.SessionFactory;
-import za.co.sindi.ai.mcp.server.features.tools.MCPCalculator;
-import za.co.sindi.ai.mcp.server.features.tools.MCPRealWeather;
-import za.co.sindi.ai.mcp.server.impl.MCPServerFeatureManager;
+import za.co.sindi.ai.mcp.server.features.examples.MCPCalculator;
+import za.co.sindi.ai.mcp.server.features.examples.MCPRealWeather;
+import za.co.sindi.ai.mcp.server.impl.DefaultMcpServer;
 import za.co.sindi.ai.mcp.server.runtime.BeanDefinitionRegistry;
 import za.co.sindi.ai.mcp.server.runtime.FeatureDefinitionManager;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
@@ -67,7 +67,7 @@ public class SSETransportResource /* extends BaseServer */ {
 	
 	private MCPServerConfig mcpServerConfig;
 	
-	private MCPServerFeatureManager featureManager;
+	private DefaultMcpServer featureManager;
 	
 	@Resource
 	private ManagedExecutorService managedExecutorService;
@@ -81,7 +81,7 @@ public class SSETransportResource /* extends BaseServer */ {
 		mcpServerConfig = new DefaultMCPServerConfig(DEFAULT_APPLICATION_NAME, DEFAULT_APPLICATON_VERSION, null).enableAll();
 		
 		FeatureDefinitionManager featureDefinitionManager = new DefaultFeatureDefinitionManager(builder.build().getBeans(), new DefaultFeatureExecutorFactory());
-		featureManager = new MCPServerFeatureManager(mcpServerConfig.getCapabilities(), sessionManager, featureDefinitionManager); //new MCPServerFeatureManager(thisServer, featureDefinitionManager);
+		featureManager = new DefaultMcpServer(mcpServerConfig.getCapabilities(), sessionManager, featureDefinitionManager); //new DefaultMcpServer(thisServer, featureDefinitionManager);
 		sessionFactory = (transport) -> {
 			MCPServerSession session = new MCPServerSession(transport, mcpServerConfig.getServerInfo(), mcpServerConfig.getCapabilities(), mcpServerConfig.getInstructions());
 			featureManager.setup(session);

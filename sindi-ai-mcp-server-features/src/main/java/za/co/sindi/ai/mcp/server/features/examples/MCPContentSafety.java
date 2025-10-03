@@ -1,7 +1,7 @@
 /**
  * 
  */
-package za.co.sindi.ai.mcp.server.features.tools;
+package za.co.sindi.ai.mcp.server.features.examples;
 
 import za.co.sindi.ai.mcp.schema.PromptMessage;
 import za.co.sindi.ai.mcp.schema.Role;
