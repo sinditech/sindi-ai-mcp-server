@@ -367,6 +367,7 @@ public class MCPRealWeather {
     	
     	StringBuilder sb = new StringBuilder();
         sb.append("🌡️  === CURRENT WEATHER ===");
+        sb.append("\n🌍 Location: " + weather.location.city + ", " + weather.location.country); 
         sb.append("\n📅 Updated: " + weather.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         sb.append("\n🌡️ Temperature: " + weather.temperature + "°C (feels like " + weather.apparentTemperature + "°C)");
         sb.append("\n📊 High: " + weather.tempMax + "°C | Low: " + weather.tempMin + "°C");
@@ -398,6 +399,7 @@ public class MCPRealWeather {
     	
     	StringBuilder sb = new StringBuilder();
         sb.append("🏭 === AIR QUALITY ===");
+        sb.append("\n🌍 Location: " + airQuality.location.city + ", " + airQuality.location.country);
         sb.append("\n📅 Updated: " + airQuality.timestamp.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         
         if (airQuality.europeanAqi > 0) {
