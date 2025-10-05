@@ -7,7 +7,7 @@
 		<artifactId>sindi-ai-mcp-servers</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<artifactId>sindi-ai-mcp-server-spi</artifactId>
+	<artifactId>sindi-ai-mcp-server-runtime</artifactId>
 
 	<developers>
 		<developer>
@@ -21,8 +21,17 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>jakarta.platform</groupId>
+			<artifactId>jakarta.jakartaee-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>za.co.sindi</groupId>
-			<artifactId>sindi-ai-mcp</artifactId>
+			<artifactId>sindi-ai-mcp-server-spi</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>za.co.sindi</groupId>
+			<artifactId>sindi-resource-scanner</artifactId>
 		</dependency>
 	</dependencies>
 </project>

@@ -34,12 +34,7 @@
 		
 		<dependency>
 			<groupId>za.co.sindi</groupId>
-			<artifactId>sindi-ai-mcp</artifactId>
-		</dependency>
-		
-		<dependency>
-			<groupId>za.co.sindi</groupId>
-			<artifactId>sindi-ai-mcp-server-spi</artifactId>
+			<artifactId>sindi-ai-mcp-server-runtime</artifactId>
 		</dependency>
 		
 		<dependency>
