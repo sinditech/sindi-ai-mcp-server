@@ -12,7 +12,6 @@ import za.co.sindi.ai.mcp.schema.TextContent;
 import za.co.sindi.ai.mcp.server.exception.MCPException;
 import za.co.sindi.ai.mcp.server.runtime.AbstractResultHandler;
 import za.co.sindi.ai.mcp.server.runtime.FeatureExecutor;
-import za.co.sindi.ai.mcp.server.runtime.exception.FeatureExecutionException;
 import za.co.sindi.commons.utils.Arrays;
 
 /**
@@ -32,11 +31,6 @@ public class DefaultToolResultHandler extends AbstractResultHandler<CallToolRequ
 	@Override
 	protected CallToolResult generateResult(Object value, Throwable throwable) {
 		// TODO Auto-generated method stub
-		if (throwable != null) {
-			if (throwable instanceof FeatureExecutionException fee)	throw fee;
-			else if (!(throwable instanceof MCPException)) throw new FeatureExecutionException(throwable);
-		}
-		
 		CallToolResult result = new CallToolResult();
 		List<? extends ContentBlock> contents;
 		if (throwable != null && throwable instanceof MCPException) {

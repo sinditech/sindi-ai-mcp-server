@@ -1,0 +1,81 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>za.co.sindi</groupId>
+		<artifactId>sindi-ai-mcp-servers</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	<artifactId>sindi-ai-mcp-examples</artifactId>
+	<packaging>pom</packaging>
+
+	<modules>
+		<module>sindi-ai-mcp-server-rest</module>
+		<module>sindi-ai-mcp-server-servlet</module>
+	</modules>
+
+	<properties>
+		<!--Strictly for OpenLiberty-->
+		<liberty.env.ENGINE_CACHE_DIR>
+			${project.build.directory}/liberty/wlp/usr/shared/resources/lib/</liberty.env.ENGINE_CACHE_DIR>
+	</properties>
+	
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>za.co.sindi</groupId>
+				<artifactId>sindi-ai-mcp-server-runtime-servlet</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>za.co.sindi</groupId>
+				<artifactId>sindi-ai-mcp-server-runtime-rest</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<!--
+		https://mvnrepository.com/artifact/jakarta.platform/jakarta.jakartaee-api -->
+		<dependency>
+			<groupId>jakarta.platform</groupId>
+			<artifactId>jakarta.jakartaee-api</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>za.co.sindi</groupId>
+			<artifactId>sindi-ai-mcp-server-features</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>${project.artifactId}</finalName>
+		<pluginManagement>
+			<plugins>
+				<!--
+				https://mvnrepository.com/artifact/io.openliberty.tools/liberty-maven-plugin -->
+				<plugin>
+					<groupId>io.openliberty.tools</groupId>
+					<artifactId>liberty-maven-plugin</artifactId>
+					<version>3.11.3</version>
+					<configuration>
+						<bootstrapProperties>
+							<project.name>${project.build.finalName}</project.name>
+						</bootstrapProperties>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+
+		<plugins>
+			<plugin>
+				<groupId>io.openliberty.tools</groupId>
+				<artifactId>liberty-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>

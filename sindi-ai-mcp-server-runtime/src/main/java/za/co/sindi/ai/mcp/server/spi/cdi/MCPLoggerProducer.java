@@ -4,7 +4,7 @@
 package za.co.sindi.ai.mcp.server.spi.cdi;
 
 import jakarta.enterprise.context.SessionScoped;
-import za.co.sindi.ai.mcp.server.runtime.MCPContext;
+import za.co.sindi.ai.mcp.server.spi.MCPContext;
 import za.co.sindi.ai.mcp.server.spi.MCPLogger;
 import za.co.sindi.commons.utils.Strings;
 

@@ -15,8 +15,8 @@ import za.co.sindi.ai.mcp.server.ResourceManager;
 import za.co.sindi.ai.mcp.server.RootsProvider;
 import za.co.sindi.ai.mcp.server.Server;
 import za.co.sindi.ai.mcp.server.ToolManager;
-import za.co.sindi.ai.mcp.server.runtime.MCPContext;
 import za.co.sindi.ai.mcp.server.runtime.MCPServer;
+import za.co.sindi.ai.mcp.server.spi.MCPContext;
 import za.co.sindi.ai.mcp.server.spi.MCPLogger;
 import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
 

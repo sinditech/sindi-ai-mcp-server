@@ -5,7 +5,7 @@ package za.co.sindi.ai.mcp.server.spi.cdi;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.spi.CreationalContext;
-import za.co.sindi.ai.mcp.server.runtime.MCPContext;
+import za.co.sindi.ai.mcp.server.spi.MCPContext;
 import za.co.sindi.commons.utils.Strings;
 
 /**

@@ -8,6 +8,7 @@ import java.util.List;
 import za.co.sindi.ai.mcp.schema.GetPromptRequest;
 import za.co.sindi.ai.mcp.schema.GetPromptResult;
 import za.co.sindi.ai.mcp.schema.PromptMessage;
+import za.co.sindi.ai.mcp.server.exception.MCPException;
 import za.co.sindi.ai.mcp.server.runtime.AbstractResultHandler;
 import za.co.sindi.ai.mcp.server.runtime.FeatureExecutor;
 import za.co.sindi.commons.utils.Arrays;
@@ -29,6 +30,8 @@ public class DefaultPromptResultHandler extends AbstractResultHandler<GetPromptR
 	@Override
 	protected GetPromptResult generateResult(Object value, Throwable throwable) {
 		// TODO Auto-generated method stub
+		if (throwable != null && throwable instanceof MCPException e) throw e;
+		
 		GetPromptResult result = new GetPromptResult();
 		List<PromptMessage> messages =  List.of();
 		

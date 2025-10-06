@@ -5,9 +5,9 @@
 package za.co.sindi.ai.mcp.server.runtime.impl;
 
 import za.co.sindi.ai.mcp.server.MCPSession;
-import za.co.sindi.ai.mcp.server.runtime.MCPContext;
 import za.co.sindi.ai.mcp.server.runtime.MCPContextFactory;
 import za.co.sindi.ai.mcp.server.runtime.MCPServer;
+import za.co.sindi.ai.mcp.server.spi.MCPContext;
 import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
 
 /**

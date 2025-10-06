@@ -7,6 +7,8 @@ import za.co.sindi.ai.mcp.schema.JSONRPCRequest;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.schema.Request;
 import za.co.sindi.ai.mcp.schema.Result;
+import za.co.sindi.ai.mcp.server.exception.MCPException;
+import za.co.sindi.ai.mcp.server.runtime.exception.FeatureExecutionException;
 import za.co.sindi.ai.mcp.shared.RequestHandler;
 import za.co.sindi.ai.mcp.shared.RequestHandlerExtra;
 
@@ -35,6 +37,9 @@ public abstract class AbstractResultHandler<REQ extends Request, RES extends Res
 		try {
 			value = executor.invoke(MCPSchema.toRequest(request));
 		} catch (Throwable e) {
+			if (e instanceof FeatureExecutionException fee)	throw fee;
+			if (!(e instanceof MCPException)) throw new FeatureExecutionException(e);
+			
 			throwable = e;
 		}
 		return generateResult(value, throwable);

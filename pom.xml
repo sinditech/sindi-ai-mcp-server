@@ -7,11 +7,12 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<modules>
-		<module>sindi-ai-mcp-server-rest</module>
-		<module>sindi-ai-mcp-server-servlet</module>
+		<module>sindi-ai-mcp-server-runtime-rest</module>
+		<module>sindi-ai-mcp-server-runtime-servlet</module>
 		<module>sindi-ai-mcp-server-spi</module>
 		<module>sindi-ai-mcp-server-runtime</module>
 		<module>sindi-ai-mcp-server-features</module>
+		<module>examples</module>
 	</modules>
 	
 	<developers>
