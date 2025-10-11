@@ -111,12 +111,13 @@ public class MCPInitializer {
 		}
 	}
 	
-	public void destroy(@Observes @Destroyed(ApplicationScoped.class) Object event) {
+	public void destroy(@Observes @Destroyed(ApplicationScoped.class) ServletContext servletContext) {
 		if (sessionManager.totalSessions() > 0) {
 			Iterator<MCPSession> itr = sessionManager.iterator();
 			while (itr.hasNext()) {
 				MCPSession session = itr.next();
 				session.closeQuietly();
+				LOGGER.info("Client Disconnected: " + session.getId());
 				itr.remove();
 			}
 		}

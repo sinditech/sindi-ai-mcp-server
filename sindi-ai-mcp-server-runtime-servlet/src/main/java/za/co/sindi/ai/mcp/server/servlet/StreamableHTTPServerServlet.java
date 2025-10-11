@@ -32,7 +32,6 @@ import za.co.sindi.ai.mcp.server.runtime.MCPServer;
 import za.co.sindi.ai.mcp.server.runtime.SessionFactory;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
 import za.co.sindi.ai.mcp.server.runtime.streamable.SessionIdGenerator;
-import za.co.sindi.ai.mcp.server.spi.MCPContext;
 import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
 import za.co.sindi.commons.utils.Strings;
 
@@ -185,7 +184,6 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 		
 		session.closeQuietly();
 		sessionManager.removeSession(sessionIdOptional.get());
-		MCPContext.getCurrentInstance().release();
 		writeResponse(response, HttpServletResponse.SC_OK, TEXT_PLAIN, "OK");
 	}
 	

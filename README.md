@@ -62,6 +62,12 @@ For more programmatic approach, you can register an MCP feature with its callbac
 - **`PromptManager`**: For prompt registration.
 - **`ResourceManager`**: For resource and resource template registration.
 
+Additionally, you can inject the following MCP resources:
+
+- **`MCPLogger`**: MCP Logging to client session (if enabled).
+- **`MCPContext`**: MCP Context, providing manual MCP features and client session.
+
+
 ## 📖 Examples
 
 The project includes comprehensive examples for MCP servers, found in the `examples/` directory. There are 2 examples, each demonstrating MCP on their various Jakarta EE server protocols:

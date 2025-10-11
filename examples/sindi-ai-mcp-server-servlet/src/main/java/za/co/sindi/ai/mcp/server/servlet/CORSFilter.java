@@ -28,16 +28,26 @@ public class CORSFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
-        // Set CORS headers
+        // Allow all origins (use with caution in production)
         response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization");
-		response.setHeader("Access-Control-Allow-Credentials", "true");
-		response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
-		response.setHeader("Access-Control-Max-Age", "1209600");
-
-        // Handle preflight OPTIONS requests
+        
+        // Allowed HTTP methods
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE");
+        
+        // Exposed headers that the client can access
+        response.setHeader("Access-Control-Expose-Headers", 
+            "mcp-session-id, last-event-id, mcp-protocol-version");
+        
+        // Allowed request headers
+        response.setHeader("Access-Control-Allow-Headers", 
+            "Origin, Accept, Content-Type, Authorization, X-Requested-With");
+        
+        // Preflight cache duration (in seconds)
+        response.setHeader("Access-Control-Max-Age", "1209600");
+        
+        // Handle OPTIONS preflight requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatus(HttpServletResponse.SC_OK);
+        	response.setStatus(HttpServletResponse.SC_NO_CONTENT);
             return;
         }
 
