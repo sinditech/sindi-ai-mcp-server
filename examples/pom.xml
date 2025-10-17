@@ -4,11 +4,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>za.co.sindi</groupId>
-		<artifactId>sindi-ai-mcp-servers</artifactId>
+		<artifactId>sindi-ai-mcp-server</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
-	<artifactId>sindi-ai-mcp-examples</artifactId>
+	<artifactId>sindi-ai-mcp-server-examples</artifactId>
 	<packaging>pom</packaging>
 
 	<modules>
@@ -26,13 +26,25 @@
 		<dependencies>
 			<dependency>
 				<groupId>za.co.sindi</groupId>
-				<artifactId>sindi-ai-mcp-server-runtime-servlet</artifactId>
+				<artifactId>sindi-ai-mcp-server-runtime-servlet-sse</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			
 			<dependency>
 				<groupId>za.co.sindi</groupId>
-				<artifactId>sindi-ai-mcp-server-runtime-rest</artifactId>
+				<artifactId>sindi-ai-mcp-server-runtime-servlet-streamable-http</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>za.co.sindi</groupId>
+				<artifactId>sindi-ai-mcp-server-runtime-rest-sse</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>za.co.sindi</groupId>
+				<artifactId>sindi-ai-mcp-server-runtime-rest-streamable-http</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 		</dependencies>

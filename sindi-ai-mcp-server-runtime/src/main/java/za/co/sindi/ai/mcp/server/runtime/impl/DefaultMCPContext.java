@@ -39,7 +39,7 @@ public class DefaultMCPContext extends MCPContext {
 	private DefaultMCPContext() {
 		super();
 		// TODO Auto-generated constructor stub
-		setCurrentInstance(this);
+		MCPContext.setCurrentInstance(this);
 	}
 
 	/**
@@ -131,6 +131,6 @@ public class DefaultMCPContext extends MCPContext {
 //		toolManager = null;
 		mcpServer = null;
 		currentSession = null;
-		setCurrentInstance(null);
+		MCPContext.setCurrentInstance(null);
 	}
 }

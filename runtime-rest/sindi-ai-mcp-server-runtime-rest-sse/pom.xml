@@ -4,20 +4,10 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>za.co.sindi</groupId>
-		<artifactId>sindi-ai-mcp-server</artifactId>
+		<artifactId>sindi-ai-mcp-server-runtime-rest</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<artifactId>sindi-ai-mcp-server-runtime</artifactId>
-
-	<developers>
-		<developer>
-			<name>Buhake Sindi</name>
-			<timezone>+2</timezone>
-			<roles>
-				<role>PROJECT LEAD</role>
-			</roles>
-		</developer>
-	</developers>
+	<artifactId>sindi-ai-mcp-server-runtime-rest-sse</artifactId>
 
 	<dependencies>
 		<dependency>
@@ -27,11 +17,7 @@
 		</dependency>
 		<dependency>
 			<groupId>za.co.sindi</groupId>
-			<artifactId>sindi-ai-mcp-server-spi</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>za.co.sindi</groupId>
-			<artifactId>sindi-resource-scanner</artifactId>
+			<artifactId>sindi-ai-mcp-server-runtime-rest-base</artifactId>
 		</dependency>
 	</dependencies>
 </project>

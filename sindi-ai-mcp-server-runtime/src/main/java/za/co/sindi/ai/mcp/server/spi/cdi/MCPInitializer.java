@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.context.Destroyed;
+import jakarta.enterprise.context.BeforeDestroyed;
 import jakarta.enterprise.context.Initialized;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Produces;
@@ -37,7 +37,9 @@ import za.co.sindi.ai.mcp.server.runtime.impl.DefaultFeatureExecutorFactory;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPServer;
 import za.co.sindi.ai.mcp.server.runtime.impl.MCPServerSession;
 import za.co.sindi.ai.mcp.server.runtime.impl.ServletContextResourceContext;
+import za.co.sindi.ai.mcp.server.spi.MCPContext;
 import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
+import za.co.sindi.resource.Resource;
 import za.co.sindi.resource.scanner.ClassScanner;
 import za.co.sindi.resource.scanner.ScanningException;
 import za.co.sindi.resource.scanner.impl.ResourceClassScanner;
@@ -73,7 +75,7 @@ public class MCPInitializer {
 			ResourceContextResourceScanner resourceScanner = new ResourceContextResourceScanner(new ServletContextResourceContext(servletContext));
 			resourceScanner.addResourceFilter(filter -> filter.getPath().endsWith(".jar") || filter.getPath().endsWith(".class"));
 			resourceScanner.addResourcePath("/");
-			Collection<za.co.sindi.resource.Resource> resources = resourceScanner.scan();
+			Collection<Resource> resources = resourceScanner.scan();
 			ClassScanner classScanner = new ResourceClassScanner(ResourceUtils.buildClassLoader(resources));
 			classScanner.addTypeFilter(clazz -> {
 				final Set<Class<? extends Annotation>> mcpAnnotationSet = Set.of(MCPFeatures.MCP_METHOD_ANNOTATIONS);
@@ -111,7 +113,7 @@ public class MCPInitializer {
 		}
 	}
 	
-	public void destroy(@Observes @Destroyed(ApplicationScoped.class) ServletContext servletContext) {
+	public void cleanup(@Observes @BeforeDestroyed(ApplicationScoped.class) ServletContext servletContext) {
 		if (sessionManager.totalSessions() > 0) {
 			Iterator<MCPSession> itr = sessionManager.iterator();
 			while (itr.hasNext()) {
@@ -120,6 +122,13 @@ public class MCPInitializer {
 				LOGGER.info("Client Disconnected: " + session.getId());
 				itr.remove();
 			}
+		}
+		
+		//Clean MCPContext
+		MCPContext mcpContext = MCPContext.getCurrentInstance();
+		if (mcpContext != null) {
+			mcpContext.release();
+			mcpContext = null;
 		}
     }
 	

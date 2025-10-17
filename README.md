@@ -9,11 +9,19 @@ The project is structured into several modules, each serving a specific purpose:
 
 ### Core Modules
 
-- **`sindi-ai-mcp-server-spi`**: Fundamental CDI integration classes, interfaces, annotations and SPI definitions 
+- **`sindi-ai-mcp-server-spi`**: Fundamental server-side MCP classes, interfaces, annotations and SPI definitions 
 - **`sindi-ai-mcp-server-runtime`**: Runtime implementation of the SPI for runtime server registration and service discovery.
-- **`sindi-ai-mcp-server-runtime-rest`**: The Jakarta REST implementation of MCP SSE transport (streamable HTTP coming soon).
-- **`sindi-ai-mcp-server-runtime-servlet`**: The Jakarta Servlet implementation of the MCP SEE and Streamable HTTP protocol. 
 - **`sindi-ai-mcp-server-features`**: Example MCP features showcasing the power of MCP, the Jakarta EE way.
+
+With 2 runtimes implementations:
+- **`runtime-rest`**: This module contains the implementations of RESTful MCP server-side transports with Jakarta REST.
+  + **`sindi-ai-mcp-server-runtime-rest-base`**: The Jakarta REST base package used by all Jakarta REST implementations mentioned below.
+  + **`sindi-ai-mcp-server-runtime-rest-sse`**: The Jakarta REST implementation of MCP SSE transport.
+  + **`sindi-ai-mcp-server-runtime-rest-streamable-http`**: The Jakarta REST implementation of MCP Streamable HTTP transport. 
+
+- **`runtime-servlet`**: This module contains the implementations of web-based MCP server-side transports with Jakarta Servlet.
+  + **`sindi-ai-mcp-server-runtime-servlet-sse`**: The Jakarta Servlet implementation of MCP SSE transport.
+  + **`sindi-ai-mcp-server-runtime-servlet-streamable-http`**: The Jakarta Servlet implementation of MCP Streamable HTTP transport. 
 
 ## 🚀 Quick Start
 
