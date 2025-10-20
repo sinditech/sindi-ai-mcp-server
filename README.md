@@ -1,4 +1,4 @@
-# sindi-ai-mcp-server
+ sindi-ai-mcp-server
 Java Implementation of Anthropic's Model Context Protocol (MCP) Server.
 
 This implementation is an attempt to provide an integration between the MCP protocol and Jakarta EE application in a seamless way.
@@ -78,9 +78,9 @@ Additionally, you can inject the following MCP resources:
 
 ## 📖 Examples
 
-The project includes comprehensive examples for MCP servers, found in the `examples/` directory. There are 2 examples, each demonstrating MCP on their various Jakarta EE server protocols:
+The project includes comprehensive examples for MCP servers, found in the `examples/` directory. There are 2 examples, each demonstrating MCP on their various Jakarta EE server protocols (it bundles the `sindi-ai-mcp-server-features` module, exposing the MCP features on the respective Jakarta EE server protocols):
 
-- **`sindi-ai-mcp-server-rest`**: Running MCP server (bundled with the MCP features) on REST protocol. Note, for now on MCP SSE transport (deprecated) is implemented.
+- **`sindi-ai-mcp-server-rest`**: Running MCP server (bundled with the MCP features) on REST protocol.
 - **`sindi-ai-mcp-server-servlet`**: Running MCP server (bundled with the MCP features) on Servlet protocol.
 
 ## 🛠️ How to run examples

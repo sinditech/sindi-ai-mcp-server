@@ -55,7 +55,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 	
 	private static final StreamId STANDALONE_SSE_STREAM_ID = StreamId.of("_GET_stream");
 	
-	private final Map<StreamId, HttpServletResponse> streamMapping = new ConcurrentHashMap<>();
+	private final Map<StreamId, AsyncContext> streamMapping = new ConcurrentHashMap<>();
 	
 	private final Map<RequestId, StreamId> requestToStreamMapping = new ConcurrentHashMap<>();
 	  
@@ -96,22 +96,25 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 	public void close() throws IOException {
 		// TODO Auto-generated method stub
 //		if (asyncContext != null) asyncContext.complete();
-		streamMapping.values().stream().forEach(response -> {
+		streamMapping.entrySet().stream().forEach(entry -> {
+			AsyncContext asyncContext = entry.getValue();
 			try {
-				response.flushBuffer();
+				asyncContext.getResponse().flushBuffer();
+				asyncContext.complete();
+				LOGGER.info("[streaming ID ="+ entry.getKey().toString() +"] completed.");
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				LOGGER.log(Level.WARNING, "[sessionId="+getSessionId()+"] flushing response stream", e);
+				LOGGER.log(Level.WARNING, "[streaming ID ="+ entry.getKey().toString() + "] flushing response stream", e);
 			}
 		});
 		streamMapping.clear();
 		
+		super.close();
 		// Clear any pending responses
 	    requestResponseMap.clear();
 	    sessionId.set(null);
 	    initialized.set(false);
 	    started.set(false);
-	    super.close();
 	}
 
 	@Override
@@ -148,7 +151,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 					}
 					
 					// Check if there's already an active standalone SSE stream for this session
-				    if (streamMapping.containsKey(STANDALONE_SSE_STREAM_ID)) {
+				    if (!streamMapping.containsKey(STANDALONE_SSE_STREAM_ID)) {
 				    	// The spec says the server MAY send messages on the stream, so it's ok to discard if no stream
 				    	return ;
 				    }
@@ -167,28 +170,29 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 					throw new TransportException("No connection established for request ID: " + requestId);
 				}
 				
-				final HttpServletResponse response = streamMapping.get(streamId);
+				final AsyncContext asyncContext = streamMapping.get(streamId);
 				if (!enableJsonResponse) {
 					EventId eventId = null;
 					if (eventStore != null) {
 						eventId = eventStore.storeEvent(streamId, message); //.get();
 					}
 					
-					if (response != null) {
-						 writeSSEEvent(response, message, eventId);
+					if (asyncContext != null) {
+						writeSSEEvent(asyncContext, message, eventId);
 					}
 				}
 				
 				if (message instanceof JSONRPCResponse jsonRpcResponse) {
 					requestResponseMap.put(requestId, jsonRpcResponse);
-					List<RequestId> relatedIds = requestToStreamMapping.entrySet().stream().filter(entry -> streamMapping.containsKey(entry.getValue()) && streamMapping.get(entry.getValue()).equals(response)).map(entry -> entry.getKey()).toList();
+					List<RequestId> relatedIds = requestToStreamMapping.entrySet().stream().filter(entry -> streamMapping.containsKey(entry.getValue()) && streamMapping.get(entry.getValue()).equals(asyncContext)).map(entry -> entry.getKey()).toList();
 					boolean allResponsesReady = relatedIds.stream().allMatch(id -> requestResponseMap.containsKey(id));
 					if (allResponsesReady) {
-				        if (response == null) {
+				        if (asyncContext == null) {
 				          throw new TransportException("No connection established for request ID: "+ requestId);
 				        }
 				        
 				        if (enableJsonResponse) {
+				        	final HttpServletResponse response = (HttpServletResponse) asyncContext.getResponse();
 				        	response.setContentType(StreamableHTTPServerServlet.APPLICATION_JSON);
 				    		response.setCharacterEncoding(StreamableHTTPServerServlet.UTF_8);
 				    		
@@ -199,7 +203,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 				    		JSONRPCMessage[] messages = relatedIds.stream().map(id -> requestResponseMap.get(id)).toArray(size -> new JSONRPCMessage[size]);
 				    		response.setStatus(HttpServletResponse.SC_OK);
 				    		PrintWriter writer = response.getWriter();
-				    		writer.write(messages.length == 1 ? MCPSchema.serializeJSONRPCMessage(messages[0]) : MCPSchema.serializeJSONRPCMessage(messages));
+				    		writer.write(MCPSchema.serializeJSONRPCMessage(messages)); //messages.length == 1 ? MCPSchema.serializeJSONRPCMessage(messages[0]) : MCPSchema.serializeJSONRPCMessage(messages)
 				    		writer.flush();
 				        }
 				        
@@ -217,9 +221,10 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 		}, getExecutor());
 	}
 	
-	private void writeSSEEvent(final HttpServletResponse response, final JSONRPCMessage message, final EventId eventId) throws IOException {
+	private void writeSSEEvent(final AsyncContext asyncContext, final JSONRPCMessage message, final EventId eventId) throws IOException {
 		// TODO Auto-generated method stub
 		try {
+			HttpServletResponse response = (HttpServletResponse) asyncContext.getResponse();
 			PrintWriter writer = response.getWriter();
 			writer.write("event: " + MESSAGE_EVENT_TYPE + "\n");
 			if (eventId != null) {
@@ -250,6 +255,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 			String lastEventId = request.getHeader("last-event-id");
 			if (!Strings.isNullOrEmpty(lastEventId)) {
 				replayEvents(EventId.of(lastEventId), request, response);
+				return ;
 			}
 		}
 		
@@ -261,11 +267,13 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 				return ;
 			}
 			
-			// Assign the response to the standalone SSE stream
-			streamMapping.put(STANDALONE_SSE_STREAM_ID, response);
+			final AsyncContext asyncContext = createAsyncContext(request, response);
 			
-			createAsyncContext(request, response)
-			.addListener(new AsyncListener() {
+			// Assign the response to the standalone SSE stream
+			streamMapping.put(STANDALONE_SSE_STREAM_ID, asyncContext);
+			
+//			createAsyncContext(request, response)
+			asyncContext.addListener(new AsyncListener() {
 				
 				@Override
 				public void onTimeout(AsyncEvent event) throws IOException {
@@ -360,9 +368,10 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 				Arrays.stream(messages).forEach(message -> getMessageHandler().onMessage(message));
 			} else {
 				StreamId streamId = StreamId.of(UUID.randomUUID().toString());
+				final AsyncContext asyncContext = createAsyncContext(request, response);
 				if (!enableJsonResponse) {
-					createAsyncContext(request, response)
-					.addListener(new AsyncListener() {
+//					final AsyncContext asyncContext = createAsyncContext(request, response);
+					asyncContext.addListener(new AsyncListener() {
 						
 						@Override
 						public void onTimeout(AsyncEvent event) throws IOException {
@@ -403,7 +412,7 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 				
 				Arrays.stream(messages).forEach(message -> {
 					if (message instanceof JSONRPCRequest jsonRPCRequest) {
-						streamMapping.put(streamId, response);
+						streamMapping.put(streamId, asyncContext);
 						requestToStreamMapping.put(jsonRPCRequest.getId(), streamId);
 					}
 					
@@ -425,25 +434,25 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 	private void replayEvents(final EventId lastEventId, final HttpServletRequest request, final HttpServletResponse response) {
 		if (eventStore == null) return ;
 		
-		Sender sender = (eventId, message) -> {
-//			return CompletableFuture.runAsync(() -> {
-//				try {
-//					writeSSEEvent(response, message, eventId);
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					getMessageHandler().onError(new TransportException("Failed replay events", e));
-//				}
-//			});
-			try {
-				writeSSEEvent(response, message, eventId);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				getMessageHandler().onError(new TransportException("Failed replay events", e));
-			}
-		};
+//		Sender sender = (eventId, message) -> {
+////			return CompletableFuture.runAsync(() -> {
+////				try {
+////					writeSSEEvent(response, message, eventId);
+////				} catch (IOException e) {
+////					// TODO Auto-generated catch block
+////					getMessageHandler().onError(new TransportException("Failed replay events", e));
+////				}
+////			});
+//			try {
+//				writeSSEEvent(response, message, eventId);
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				getMessageHandler().onError(new TransportException("Failed replay events", e));
+//			}
+//		};
 		
-		createAsyncContext(request, response)
-		.addListener(new AsyncListener() {
+		final AsyncContext asyncContext = createAsyncContext(request, response);
+		asyncContext.addListener(new AsyncListener() {
 			
 			@Override
 			public void onTimeout(AsyncEvent event) throws IOException {
@@ -478,11 +487,28 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 			}
 		});
 		
+		Sender sender = (eventId, message) -> {
+//			return CompletableFuture.runAsync(() -> {
+//				try {
+//					writeSSEEvent(response, message, eventId);
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					getMessageHandler().onError(new TransportException("Failed replay events", e));
+//				}
+//			});
+			try {
+				writeSSEEvent(asyncContext, message, eventId);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				getMessageHandler().onError(new TransportException("Failed replay events", e));
+			}
+		};
+		
 //		StreamableHTTPServerServlet.writeResponse(response, HttpServletResponse.SC_OK, StreamableHTTPServerServlet.TEXT_PLAIN, "OK");
 		response.setStatus(HttpServletResponse.SC_OK);
 		
 		final StreamId streamId = eventStore.replayEventAfter(lastEventId, sender); //.get();
-		streamMapping.put(streamId, response);
+		streamMapping.put(streamId, asyncContext);
 	}
 	
 	private AsyncContext createAsyncContext(final HttpServletRequest request, final HttpServletResponse response) {
@@ -490,7 +516,6 @@ public class StreamableHTTPServerTransport extends AbstractTransport implements 
 		response.setCharacterEncoding(StreamableHTTPServerServlet.UTF_8);
 		response.setHeader("Cache-Control", "no-cache");
 		response.setHeader("Connection", "keep-alive");
-		response.setHeader("Access-Control-Allow-Origin", "*");
 		
 		if (!Strings.isNullOrEmpty(getSessionId())) {
 			response.setHeader(StreamableHTTPServerServlet.MCP_SESSION_ID_HTTP_HEADER_NAME, getSessionId());

@@ -79,6 +79,7 @@ public class SSERestServerTransport extends AbstractTransport implements ServerT
 	public void close() throws IOException {
 		// TODO Auto-generated method stub
 		sseEventSink.close();
+		super.close();
 	}
 
 	@Override
@@ -92,7 +93,8 @@ public class SSERestServerTransport extends AbstractTransport implements ServerT
             throw new TransportException("SSEServerTransport already started! If using Server class, note that connect() calls start() automatically.");
         }
 		
-		return CompletableFuture.runAsync(() -> broadcast(TEXT_PLAIN, ENDPOINT_EVENT_TYPE, messageEndpoint + "?" + sessionIdParameterName + "=" + sessionId), getExecutor());
+		return broadcast(TEXT_PLAIN, ENDPOINT_EVENT_TYPE, messageEndpoint + "?" + sessionIdParameterName + "=" + sessionId).thenAccept(result -> {}).toCompletableFuture();
+//		return CompletableFuture.runAsync(() -> broadcast(TEXT_PLAIN, ENDPOINT_EVENT_TYPE, messageEndpoint + "?" + sessionIdParameterName + "=" + sessionId), getExecutor());
 	}
 
 	@Override
@@ -106,7 +108,8 @@ public class SSERestServerTransport extends AbstractTransport implements ServerT
 			throw new TransportException("Transport not connected.");
 		}
 		
-		return CompletableFuture.runAsync(() -> broadcast(APPLICATION_JSON, MESSAGE_EVENT_TYPE, message), getExecutor());
+		return broadcast(APPLICATION_JSON, MESSAGE_EVENT_TYPE, message).thenAcceptAsync(result -> {}).toCompletableFuture();
+//		return CompletableFuture.runAsync(() -> broadcast(APPLICATION_JSON, MESSAGE_EVENT_TYPE, message), getExecutor());
 	}
 	
 	public CompletableFuture<Void> handleMessage(final JSONRPCMessage message) {
@@ -127,7 +130,7 @@ public class SSERestServerTransport extends AbstractTransport implements ServerT
 									.name(eventType)
 									.data(data.getClass(), data)
 									.mediaType(_mediaType)
-									.reconnectDelay(getRequestTimeout().toMillis())
+//									.reconnectDelay(getRequestTimeout().toMillis())
 									.build();
 									
 		return sseEventSink.send(event);

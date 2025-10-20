@@ -36,7 +36,7 @@ public class CORSFilter implements ContainerResponseFilter {
         
         // Allowed request headers
         responseContext.getHeaders().add("Access-Control-Allow-Headers", 
-            "Origin, Accept, Content-Type, Authorization, X-Requested-With");
+            "Origin, Accept, Content-Type, Authorization, X-Requested-With, mcp-session-id, last-event-id, mcp-protocol-version");
         
         // Preflight cache duration (in seconds)
         responseContext.getHeaders().add("Access-Control-Max-Age", "1209600");

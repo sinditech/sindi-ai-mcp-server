@@ -3,13 +3,18 @@
  */
 package za.co.sindi.ai.mcp.server.rest;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -18,13 +23,13 @@ import java.util.logging.Logger;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.CompletionCallback;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.ResponseBuilder;
 import jakarta.ws.rs.core.Response.Status;
-import jakarta.ws.rs.sse.OutboundSseEvent;
-import jakarta.ws.rs.sse.Sse;
-import jakarta.ws.rs.sse.SseBroadcaster;
-import jakarta.ws.rs.sse.SseEventSink;
+import jakarta.ws.rs.core.StreamingOutput;
 import za.co.sindi.ai.mcp.schema.ErrorCodes;
 import za.co.sindi.ai.mcp.schema.InitializeRequest;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
@@ -51,9 +56,12 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 	
 	private static final Logger LOGGER = Logger.getLogger(StreamableHttpRestServerTransport.class.getName());
 	
+	/** Event type for regular messages */
+	private static final String MESSAGE_EVENT_TYPE = "message";
+	
 	private static final StreamId STANDALONE_SSE_STREAM_ID = StreamId.of("_GET_stream");
 	
-	private final Map<StreamId, SseBroadcaster> streamMapping = new ConcurrentHashMap<>();
+	private final Map<StreamId, AsyncResponse> streamMapping = new ConcurrentHashMap<>();
 	
 	private final Map<RequestId, StreamId> requestToStreamMapping = new ConcurrentHashMap<>();
 	  
@@ -71,16 +79,15 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 	
 	private final SessionInitializationEvent sessionInitializationEvent;
 	
-	private final Sse sse;
+//	private final Sse sse;
 	
 	/**
-	 * @param sse
 	 * @param sessionIdGenerator
 	 * @param eventStore
 	 * @param sessionInitializationEvent
 	 */
-	public StreamableHttpRestServerTransport(Sse sse, SessionIdGenerator sessionIdGenerator, EventStore eventStore, SessionInitializationEvent sessionInitializationEvent) {
-		this.sse = sse;
+	public StreamableHttpRestServerTransport(/* Sse sse,*/ SessionIdGenerator sessionIdGenerator, EventStore eventStore, SessionInitializationEvent sessionInitializationEvent) {
+//		this.sse = sse;
 		this.sessionIdGenerator = sessionIdGenerator;
 		this.eventStore = eventStore;
 		this.sessionInitializationEvent = sessionInitializationEvent;
@@ -90,17 +97,19 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 	public void close() throws IOException {
 		// TODO Auto-generated method stub
 //		if (asyncContext != null) asyncContext.complete();
-		streamMapping.values().stream().forEach(sseBroadcaster -> {
-			sseBroadcaster.close();
-			LOGGER.info("[sessionId="+ getSessionId() +"] closed");
+		streamMapping.entrySet().stream().forEach(entry -> {
+			AsyncResponse asyncResponse = entry.getValue();
+			if (!asyncResponse.isDone()) asyncResponse.cancel();
+			LOGGER.info("[streaming ID ="+ entry.getKey().toString() +"] cancelled.");
 		});
 		streamMapping.clear();
 		
+		super.close();
 		// Clear any pending responses
 	    requestResponseMap.clear();
 	    initialized.set(false);
 	    started.set(false);
-	    super.close();
+	    sessionId.set(null);
 	}
 
 	@Override
@@ -114,12 +123,12 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 	}
 
 	@Override
-	public CompletableFuture<Void> sendAsync(JSONRPCMessage message) {
+	public CompletableFuture<Void> sendAsync(final JSONRPCMessage message) {
 		// TODO Auto-generated method stub
 		return sendAsync(message, null);
 	}
 	
-	private CompletableFuture<Void> sendAsync(JSONRPCMessage message, final RequestId relatedRequestId) {
+	private CompletableFuture<Void> sendAsync(final JSONRPCMessage message, final RequestId relatedRequestId) {
 		if (!initialized.get()) {
 			throw new TransportException("Transport not connected.");
 		}
@@ -135,7 +144,7 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 			}
 			
 			// Check if there's already an active standalone SSE stream for this session
-		    if (streamMapping.containsKey(STANDALONE_SSE_STREAM_ID)) {
+		    if (!streamMapping.containsKey(STANDALONE_SSE_STREAM_ID)) {
 		    	// The spec says the server MAY send messages on the stream, so it's ok to discard if no stream
 		    	return CompletableFuture.completedFuture(null);
 		    }
@@ -145,7 +154,7 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 				eventId = eventStore.storeEvent(STANDALONE_SSE_STREAM_ID, message);
 			}
 			
-			return broadcastMessage(streamMapping.get(STANDALONE_SSE_STREAM_ID), new JSONRPCMessage[] { message }, eventId).thenAccept((completion) -> {}).toCompletableFuture();
+			return broadcastMessage(streamMapping.get(STANDALONE_SSE_STREAM_ID), new JSONRPCMessage[] { message }, eventId);
 		}
 		
 		final StreamId streamId = requestToStreamMapping.get(requestId);
@@ -153,28 +162,28 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 			throw new TransportException("No connection established for request ID: " + requestId);
 		}
 		
-		final SseBroadcaster sseBroadcaster = streamMapping.get(streamId);
+		final AsyncResponse asyncResponse = streamMapping.get(streamId);
 		EventId eventId = null;
 		if (eventStore != null) {
 			eventId = eventStore.storeEvent(streamId, message); //.get();
 		}
 		
-		if (sseBroadcaster != null) {
-			broadcastMessage(sseBroadcaster, new JSONRPCMessage[] { message }, eventId);
+		if (asyncResponse != null) {
+			broadcastMessage(asyncResponse, new JSONRPCMessage[] { message }, eventId);
 		}
 		
 		CompletableFuture<Void> responseFuture = null;
 		if (message instanceof JSONRPCResponse jsonRpcResponse) {
 			requestResponseMap.put(requestId, jsonRpcResponse);
-			List<RequestId> relatedIds = requestToStreamMapping.entrySet().stream().filter(entry -> streamMapping.containsKey(entry.getValue()) && streamMapping.get(entry.getValue()).equals(sseBroadcaster)).map(entry -> entry.getKey()).toList();
+			List<RequestId> relatedIds = requestToStreamMapping.entrySet().stream().filter(entry -> streamMapping.containsKey(entry.getValue()) && streamMapping.get(entry.getValue()).equals(asyncResponse)).map(entry -> entry.getKey()).toList();
 			boolean allResponsesReady = relatedIds.stream().allMatch(id -> requestResponseMap.containsKey(id));
 			if (allResponsesReady) {
-		        if (sseBroadcaster == null) {
-		          throw new TransportException("No SSE broadcaster established for request ID: "+ requestId);
+		        if (asyncResponse == null) {
+		          throw new TransportException("No async response established for request ID: "+ requestId);
 		        }
 		        
 		        JSONRPCMessage[] messages = relatedIds.stream().map(id -> requestResponseMap.get(id)).toArray(size -> new JSONRPCMessage[size]);
-		        responseFuture = broadcastMessage(sseBroadcaster, messages, eventId).thenAccept((completion) -> {}).toCompletableFuture();
+		        responseFuture = broadcastMessage(asyncResponse, messages, eventId);
 		        
 		        //Cleanup
 		        relatedIds.stream().forEach(id -> {
@@ -186,27 +195,6 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 		
 		return responseFuture != null ? responseFuture : CompletableFuture.completedFuture(null);
 	}
-	
-	private CompletionStage<?> broadcastMessage(final SseBroadcaster sseBroadcaster, final JSONRPCMessage[] messages, final EventId eventId) {
-		// TODO Auto-generated method stub
-		OutboundSseEvent.Builder eventBuilder = sse.newEventBuilder()
-				.id(eventId.toString())
-				.name("message")
-				.mediaType(MediaType.APPLICATION_JSON_TYPE)
-				.reconnectDelay(getRequestTimeout().toMillis());
-		
-		if (messages.length == 1) {
-			eventBuilder = eventBuilder.data(messages[0].getClass(), messages[0]);
-		} else {
-			eventBuilder = eventBuilder.data(messages.getClass(), messages);
-		}
-		
-		if (eventId != null) {
-			eventBuilder = eventBuilder.id(eventId.toString());
-		}
-		
-		return sseBroadcaster.broadcast(eventBuilder.build());
-	}
 
 	@Override
 	public String getSessionId() {
@@ -214,9 +202,9 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 		return sessionId.get();
 	}
 	
-	public Response handleHttpGetRequest(final SseEventSink sink, final EventId lastEventId) {
+	public Response handleHttpGetRequest(final AsyncResponse asyncResponse, final EventId lastEventId) {
 		if (eventStore != null && lastEventId != null) {
-			return replayEvents(lastEventId, sink);
+			return replayEvents(asyncResponse, lastEventId);
 		}
 		
 		// Check if there's already an active standalone SSE stream for this session
@@ -225,46 +213,55 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 			throw new WebApplicationException(StreamableHttpServerResource.toResponse(Status.CONFLICT, StreamableHttpServerResource.createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Conflict: Only one SSE stream is allowed per session")));
 		}
 		
-		SseBroadcaster sseBroadcaster = sse.newBroadcaster();
-		sseBroadcaster.onClose((sseEventSink) -> {
-			// Set up close handler for client disconnects
-			streamMapping.remove(STANDALONE_SSE_STREAM_ID);
-		});
-		
-		sseBroadcaster.onError((sseEventSink, error) -> {
-			if (error != null) {
-				LOGGER.log(Level.WARNING, "[sessionId="+getSessionId()+"] onError() received from async event.", error);
-				getMessageHandler().onError(error);
+		asyncResponse.register(new CompletionCallback() {
+
+			@Override
+			public void onComplete(Throwable throwable) {
+				// TODO Auto-generated method stub
+				// Set up close handler for client disconnects
+				streamMapping.remove(STANDALONE_SSE_STREAM_ID);
 			}
+			
 		});
 		
 		// Assign the response to the standalone SSE stream
-		streamMapping.put(STANDALONE_SSE_STREAM_ID, sseBroadcaster);
+		streamMapping.put(STANDALONE_SSE_STREAM_ID, asyncResponse);
 		
-		return Response.ok().header(StreamableHttpServerResource.HTTP_HEADER_MCP_SESSION_ID_NAME, getSessionId()).build();
+//		return Response.ok().header(StreamableHttpServerResource.HTTP_HEADER_MCP_SESSION_ID_NAME, getSessionId()).type(MediaType.SERVER_SENT_EVENTS_TYPE).build();
+		ResponseBuilder builder = Response.ok();
+		applySSEEventStreamHeaders(builder);
+		return builder.build();
 	}
 	
-	private Response replayEvents(final EventId lastEventId, final SseEventSink sink) {
+	private Response replayEvents(final AsyncResponse asyncResponse, final EventId lastEventId) {
 		if (eventStore == null) return Response.noContent().header(StreamableHttpServerResource.HTTP_HEADER_MCP_SESSION_ID_NAME, getSessionId()).build();
-		
-		SseBroadcaster sseBroadcaster = sse.newBroadcaster();
-		Sender sender = (eventId, message) -> {
-			sseBroadcaster.onError((sseEventSink, error) -> {
-				if (error != null) {
-					LOGGER.log(Level.WARNING, "[sessionId="+getSessionId()+"] onError() received from async event.", error);
-					getMessageHandler().onError(error);
-					sseEventSink.close();
+				
+		asyncResponse.register(new CompletionCallback() {
+
+			@Override
+			public void onComplete(Throwable throwable) {
+				// TODO Auto-generated method stub
+				if (throwable != null) {
+					LOGGER.log(Level.WARNING, "[sessionId="+getSessionId()+"] onError() received from async event.", throwable);
+					getMessageHandler().onError(throwable);
 				}
-			});
+			}
+		});
+		
+		Sender sender = (eventId, message) -> {
+			broadcastMessage(asyncResponse, new JSONRPCMessage[] { message }, eventId);
 		};
 		
 		final StreamId streamId = eventStore.replayEventAfter(lastEventId, sender); //.get();
-		streamMapping.put(streamId, sseBroadcaster);
+		streamMapping.put(streamId, asyncResponse);
 		
-		return Response.ok().header(StreamableHttpServerResource.HTTP_HEADER_MCP_SESSION_ID_NAME, getSessionId()).build();
+//		return Response.ok().header(StreamableHttpServerResource.HTTP_HEADER_MCP_SESSION_ID_NAME, getSessionId()).build();
+		ResponseBuilder builder = Response.ok();
+		applySSEEventStreamHeaders(builder);
+		return builder.build();
 	}
 	
-	public Response handleHttpPostRequest(final SseEventSink sink, final String jsonRPCMessageStr) {
+	public Response handleHttpPostRequest(final AsyncResponse asyncResponse, final String mcpProtocolVersion, final String jsonRPCMessageStr) {
 		JSONRPCMessage[] messages = MCPSchema.deserializeJSONRPCMessages(jsonRPCMessageStr);
 		boolean isInitializationRequest = Arrays.stream(messages).anyMatch(message -> (message instanceof JSONRPCRequest && ((JSONRPCRequest)message).getMethod().equals(InitializeRequest.METHOD_INITIALIZE)));
 		
@@ -292,38 +289,104 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 			// in the Mcp-Session-Id header on all of their subsequent HTTP requests.
 			mcpSessionId = getSessionId();
 			StreamableHttpServerResource.validateMcpSession(mcpSessionId);
+			StreamableHttpServerResource.validateProtocolVersion(mcpProtocolVersion);
 		}
 		
 		boolean hasRequests = Arrays.stream(messages).anyMatch(message -> message instanceof JSONRPCRequest);
 		if (!hasRequests) {
+			Response accepted = Response.accepted().build();
+			asyncResponse.resume(accepted);
 			Arrays.stream(messages).forEach(message -> getMessageHandler().onMessage(message));
-			return Response.accepted().build();
+			return accepted;
+		} else {
+			StreamId streamId = StreamId.of(UUID.randomUUID().toString());
+			asyncResponse.register(new CompletionCallback() {
+	
+				@Override
+				public void onComplete(Throwable throwable) {
+					// TODO Auto-generated method stub
+					if (throwable != null) {
+						LOGGER.log(Level.WARNING, "[sessionId="+getSessionId()+"] onError() received from async event.", throwable);
+						getMessageHandler().onError(throwable);
+					} else {
+						// Set up close handler for client disconnects
+						streamMapping.remove(streamId);
+					}
+				}
+				
+			});
+			//So, we have hasRequests
+			
+			Arrays.stream(messages).forEach(message -> {
+				if (message instanceof JSONRPCRequest jsonRPCRequest) {
+					streamMapping.put(streamId, asyncResponse);
+					requestToStreamMapping.put(jsonRPCRequest.getId(), streamId);
+				}
+				
+				getMessageHandler().onMessage(message);
+			});
+			
+			ResponseBuilder builder = Response.ok();
+			applySSEEventStreamHeaders(builder);
+			return builder.build();
 		}
 		
-		//So, we have hasRequests
-		SseBroadcaster sseBroadcaster = sse.newBroadcaster();
-		sseBroadcaster.onClose((sseEventSink) -> {
-			// Set up close handler for client disconnects
-			streamMapping.remove(STANDALONE_SSE_STREAM_ID);
-		});
+//		return Response.ok().header(StreamableHttpServerResource.HTTP_HEADER_MCP_SESSION_ID_NAME, getSessionId()).type(MediaType.SERVER_SENT_EVENTS_TYPE).build();
+	}
+	
+	private StreamingOutput createSSEEventStream(final JSONRPCMessage[] messages, final EventId eventId) throws IOException {
+		// TODO Auto-generated method stub
 		
-		sseBroadcaster.onError((sseEventSink, error) -> {
-			if (error != null) {
-				LOGGER.log(Level.WARNING, "[sessionId="+getSessionId()+"] onError() received from async event.", error);
-				getMessageHandler().onError(error);
+		final StreamingOutput stream = new StreamingOutput() {
+
+			@Override
+			public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+				// TODO Auto-generated method stub
+				Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+				
+				try {
+					writer.write("event: " + MESSAGE_EVENT_TYPE + "\n");
+					if (eventId != null) {
+						writer.write("id: " + eventId + "\n");
+					}
+					writer.write("data: " + MCPSchema.serializeJSONRPCMessage(messages) + "\n\n");
+					writer.flush();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					LOGGER.log(Level.WARNING, "[sessionId="+getSessionId()+"] Error sending async event", e);
+		            
+		            // Rethrow as unchecked to be handled by CompletableFuture
+		            throw e;
+				}
 			}
-		});
+		};
 		
-		StreamId streamId = StreamId.of(UUID.randomUUID().toString());
-		Arrays.stream(messages).forEach(message -> {
-			if (message instanceof JSONRPCRequest jsonRPCRequest) {
-				streamMapping.put(streamId, sseBroadcaster);
-				requestToStreamMapping.put(jsonRPCRequest.getId(), streamId);
+		return stream;
+	}
+	
+	private void applySSEEventStreamHeaders(final ResponseBuilder builder) {
+		builder.type(MediaType.SERVER_SENT_EVENTS_TYPE)
+			   .header("Cache-Control", "no-cache, no-transform")
+			   .header("Connection", "keep-alive");
+		
+		String mcpSessionId = getSessionId();
+		if (!Strings.isNullOrEmpty(mcpSessionId)) {
+			builder.header(StreamableHttpServerResource.HTTP_HEADER_MCP_SESSION_ID_NAME, mcpSessionId);
+		}
+	}
+	
+	private CompletableFuture<Void> broadcastMessage(final AsyncResponse asyncResponse, final JSONRPCMessage[] messages, final EventId eventId) {
+		// TODO Auto-generated method stub
+		return CompletableFuture.runAsync(() -> {
+			try {
+				ResponseBuilder builder = Response.ok();
+				applySSEEventStreamHeaders(builder);
+				Response response = builder.entity(createSSEEventStream(messages, eventId)).build();
+				asyncResponse.resume(response);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				throw new UncheckedIOException(e);
 			}
-			
-			getMessageHandler().onMessage(message);
-		});
-		
-		return Response.ok().header(StreamableHttpServerResource.HTTP_HEADER_MCP_SESSION_ID_NAME, getSessionId()).build();
+		}, getExecutor());
 	}
 }

@@ -1,4 +1,4 @@
-package za.co.sindi.ai.mcp.server.rest;
+package za.co.sindi.ai.mcp.server.rest.provider;
 
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
