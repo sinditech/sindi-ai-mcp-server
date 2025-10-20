@@ -53,7 +53,7 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 	
 	protected static final String TEXT_PLAIN = "text/plain";
 	
-	protected static final String TEXT_EVENT_STREAM = "text/plain";
+	protected static final String TEXT_EVENT_STREAM = "text/event-stream";
 	
 	protected static final String UTF_8 = "UTF-8";
 	
@@ -187,7 +187,8 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 		
 		session.closeQuietly();
 		sessionManager.removeSession(sessionIdOptional.get());
-		MCPContext.getCurrentInstance().release();
+		MCPContext mcpContext = MCPContext.getCurrentInstance();
+		if (mcpContext != null) mcpContext.release();
 		writeResponse(response, HttpServletResponse.SC_OK, TEXT_PLAIN, "OK");
 	}
 	

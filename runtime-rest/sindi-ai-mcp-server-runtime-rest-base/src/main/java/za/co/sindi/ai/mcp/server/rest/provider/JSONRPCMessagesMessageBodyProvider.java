@@ -1,4 +1,4 @@
-package za.co.sindi.ai.mcp.server.rest;
+package za.co.sindi.ai.mcp.server.rest.provider;
 
 import java.io.IOException;
 import java.io.InputStream;

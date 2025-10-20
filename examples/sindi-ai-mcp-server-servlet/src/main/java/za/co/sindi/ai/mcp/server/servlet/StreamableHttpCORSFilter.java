@@ -18,7 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
  * @author Buhake Sindi
  * @since 06 October 2025
  */
-@WebFilter(urlPatterns = "/*", asyncSupported=true)
+@WebFilter(urlPatterns = "/mcp", asyncSupported=true)
 public class StreamableHttpCORSFilter implements Filter {
 
 	@Override
@@ -40,7 +40,7 @@ public class StreamableHttpCORSFilter implements Filter {
         
         // Allowed request headers
         response.setHeader("Access-Control-Allow-Headers", 
-            "Origin, Accept, Content-Type, Authorization, X-Requested-With");
+            "Origin, Accept, Content-Type, Authorization, X-Requested-With, mcp-session-id, last-event-id, mcp-protocol-version");
         
         // Preflight cache duration (in seconds)
         response.setHeader("Access-Control-Max-Age", "1209600");

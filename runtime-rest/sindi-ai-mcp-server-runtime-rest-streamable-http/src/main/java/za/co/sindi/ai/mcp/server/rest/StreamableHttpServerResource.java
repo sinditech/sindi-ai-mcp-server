@@ -2,13 +2,14 @@ package za.co.sindi.ai.mcp.server.rest;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import jakarta.annotation.Resource;
 import jakarta.enterprise.concurrent.ManagedExecutorService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -20,13 +21,12 @@ import jakarta.ws.rs.NotSupportedException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.container.AsyncResponse;
+import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
-import jakarta.ws.rs.sse.Sse;
-import jakarta.ws.rs.sse.SseEventSink;
 import za.co.sindi.ai.mcp.schema.ErrorCodes;
 import za.co.sindi.ai.mcp.schema.JSONRPCError;
 import za.co.sindi.ai.mcp.schema.JSONRPCError.Error;
@@ -94,7 +94,7 @@ public class StreamableHttpServerResource {
 	
 	@GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
-    public Response getSSEStreams(@Context SseEventSink sink,
+    public Response getSSEStreams( @Suspended AsyncResponse asyncResponse,
     		@HeaderParam(HttpHeaders.ACCEPT) String acceptHeader,
             @HeaderParam(HTTP_HEADER_MCP_SESSION_ID_NAME) String mcpSessionId,
             @HeaderParam(HTTP_HEADER_MCP_PROTOCOL_VERSION_NAME) String mcpProtocolVersion,
@@ -111,7 +111,7 @@ public class StreamableHttpServerResource {
 		
 		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
 		StreamableHttpRestServerTransport serverTransport = (StreamableHttpRestServerTransport) session.getTransport();
-		return serverTransport.handleHttpGetRequest(sink, Strings.isNullOrEmpty(lastEventId) ? null : EventId.of(lastEventId));
+		return serverTransport.handleHttpGetRequest(asyncResponse, Strings.isNullOrEmpty(lastEventId) ? null : EventId.of(lastEventId));
 	}
 	
 	@POST
@@ -122,14 +122,14 @@ public class StreamableHttpServerResource {
 									@HeaderParam(HttpHeaders.CONTENT_TYPE) String contentTypeHeader,
 						            @HeaderParam(HTTP_HEADER_MCP_SESSION_ID_NAME) String mcpSessionId,
 						            @HeaderParam(HTTP_HEADER_MCP_PROTOCOL_VERSION_NAME) String mcpProtocolVersion,
-						            @Context SseEventSink sink, @Context Sse sse) {
+						            @Suspended AsyncResponse asyncResponse) {
 		validateAcceptHeader(acceptHeader, APPLICATION_JSON, TEXT_EVENT_STREAM);
 		validateContentTypeHeader(contentTypeHeader);
 		
 		StreamableHttpRestServerTransport transport = null;
 		if (Strings.isNullOrEmpty(mcpSessionId)) {
 			final MCPSession[] sessionHolder = new MCPSession[1];
-			sessionHolder[0] = sessionFactory.create(new StreamableHttpRestServerTransport(sse, sessionIdGenerator, eventStore, (String newSessionId) -> {
+			sessionHolder[0] = sessionFactory.create(new StreamableHttpRestServerTransport(sessionIdGenerator, eventStore, (String newSessionId) -> {
 				LOGGER.info("Session initialized with ID: " + newSessionId);
 				sessionManager.addSession(newSessionId, sessionHolder[0]);
 			}));
@@ -141,8 +141,6 @@ public class StreamableHttpServerResource {
 			if (sessionHolder[0] instanceof Server server) server.connect();
 			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, sessionHolder[0]);
 		} else {
-			validateProtocolVersion(mcpProtocolVersion);
-			
 			MCPSession session = sessionManager.getSession(mcpSessionId);
 			if (session == null) {
 				throw new NotFoundException(toResponse(Status.NOT_FOUND, createJSONRPCError(ErrorCodes.REQUEST_TIMEOUT, "Session not found.")));
@@ -152,7 +150,8 @@ public class StreamableHttpServerResource {
 			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
 		}
 		
-		return transport.handleHttpPostRequest(sink, jsonRPCMessageStr);
+		asyncResponse.setTimeoutHandler(null);
+		return transport.handleHttpPostRequest(asyncResponse, mcpProtocolVersion, jsonRPCMessageStr);
 	}
 	
 	/**
@@ -169,14 +168,17 @@ public class StreamableHttpServerResource {
 		
 		session.closeQuietly();
 		sessionManager.removeSession(mcpSessionId);
-		MCPContext.getCurrentInstance().release();
+		MCPContext mcpContext = MCPContext.getCurrentInstance();
+		if (mcpContext != null) mcpContext.release();
 
 		return Response.ok("OK").type(MediaType.TEXT_PLAIN_TYPE).encoding(UTF_8).build();
     }
 	
 	private void validateAcceptHeader(final String acceptValue, final String... acceptableValues) {
 		// TODO Auto-generated method stub
-		if (!Arrays.stream(acceptableValues).anyMatch(value -> value.equalsIgnoreCase(acceptValue))) {
+		Set<String> values = new HashSet<>(Arrays.asList(acceptValue.split("\\s*,\\s*")));
+		boolean valueContains = Arrays.stream(acceptableValues).anyMatch(value -> values.contains(value));
+		if (!valueContains) {
 			throw new NotAcceptableException(toResponse(Status.NOT_ACCEPTABLE, createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Not Acceptable: Client must accept the following value(s): " + String.join(",", acceptableValues))));
 		}
 	}
