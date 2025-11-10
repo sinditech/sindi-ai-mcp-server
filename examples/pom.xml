@@ -12,8 +12,8 @@
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>sindi-ai-mcp-server-rest</module>
-		<module>sindi-ai-mcp-server-servlet</module>
+		<module>rest</module>
+		<module>servlet</module>
 	</modules>
 
 	<properties>

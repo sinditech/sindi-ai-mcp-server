@@ -11,7 +11,7 @@ The project is structured into several modules, each serving a specific purpose:
 
 - **`sindi-ai-mcp-server-spi`**: Fundamental server-side MCP classes, interfaces, annotations and SPI definitions 
 - **`sindi-ai-mcp-server-runtime`**: Runtime implementation of the SPI for runtime server registration and service discovery.
-- **`sindi-ai-mcp-server-features`**: Example MCP features showcasing the power of MCP, the Jakarta EE way.
+- **`sindi-ai-mcp-server-features`**: Production-ready MCP features, with some examples, showcasing the power of MCP, the Jakarta EE way.
 
 With 2 runtimes implementations:
 - **`runtime-rest`**: This module contains the implementations of RESTful MCP server-side transports with Jakarta REST.

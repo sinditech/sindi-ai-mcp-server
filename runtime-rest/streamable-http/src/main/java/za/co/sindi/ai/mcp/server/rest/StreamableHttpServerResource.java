@@ -94,7 +94,7 @@ public class StreamableHttpServerResource {
 	
 	@GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
-    public Response getSSEStreams( @Suspended AsyncResponse asyncResponse,
+    public Response getSSEStreams(@Suspended AsyncResponse asyncResponse,
     		@HeaderParam(HttpHeaders.ACCEPT) String acceptHeader,
             @HeaderParam(HTTP_HEADER_MCP_SESSION_ID_NAME) String mcpSessionId,
             @HeaderParam(HTTP_HEADER_MCP_PROTOCOL_VERSION_NAME) String mcpProtocolVersion,
