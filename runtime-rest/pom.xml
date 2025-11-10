@@ -12,9 +12,9 @@
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>sindi-ai-mcp-server-runtime-rest-base</module>
-		<module>sindi-ai-mcp-server-runtime-rest-sse</module>
-		<module>sindi-ai-mcp-server-runtime-rest-streamable-http</module>
+		<module>base</module>
+		<module>sse</module>
+		<module>streamable-http</module>
 	</modules>
 	
 	<dependencyManagement>
