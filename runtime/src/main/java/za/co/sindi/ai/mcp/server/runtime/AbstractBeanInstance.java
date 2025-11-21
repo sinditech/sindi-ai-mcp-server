@@ -20,8 +20,13 @@ public abstract class AbstractBeanInstance implements BeanInstance {
 		Object result = null;
         try {
             result = method.invoke(instance, arguments);
-        } catch (InvocationTargetException e) {
-        	throw Throwables.getRootCause(e);
+        } catch (IllegalAccessException e) {
+        	method.setAccessible(true);
+        	try {
+        		result = method.invoke(instance, arguments);
+        	} catch (InvocationTargetException ite) {
+        		throw Throwables.getRootCause(ite);
+        	}
         }
         return result;
 	}

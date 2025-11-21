@@ -140,13 +140,13 @@ public class MCPServerContainers {
     }
 
     @Tool(description = "Get the low-level information and configuration of a Docker or Podman container with the specified container ID or name")
-    public InspectContainerResponse container_inspect(
+    InspectContainerResponse container_inspect(
             @ToolArgument(description = "Docker or Podman container ID or name to displays the information") String name) {
         return dockerClient.inspectContainerCmd(name).exec();
     }
 
     @Tool(description = "Removes a Docker or Podman container with the specified container ID or name (rm)")
-    public String container_remove(@ToolArgument(description = "Docker or Podman container ID or name to remove") String name) {
+    String container_remove(@ToolArgument(description = "Docker or Podman container ID or name to remove") String name) {
         dockerClient.removeContainerCmd(name).exec();
         return "Container removed: " + name;
     }
@@ -186,13 +186,13 @@ public class MCPServerContainers {
     }
 
     @Tool(description = "Stops a Docker or Podman running container with the specified container ID or name")
-    public String container_stop(@ToolArgument(description = "Docker or Podman container ID or name to stop") String name) {
+    String container_stop(@ToolArgument(description = "Docker or Podman container ID or name to stop") String name) {
         dockerClient.stopContainerCmd(name).exec();
         return "Container stopped: " + name;
     }
 
     @Tool(description = "Build a Docker or Podman image from a Dockerfile, Podmanfile, or Containerfile")
-    public String image_build(
+    String image_build(
             @ToolArgument(description = """
                         The absolute path to the Dockerfile, Podmanfile, or Containerfile
                     to build the image from""", required = true) String containerFile,
@@ -212,7 +212,7 @@ public class MCPServerContainers {
     }
 
     @Prompt(description = "Service Architecture Diagram")
-    public PromptMessage service_architecture_diagram() {
+    PromptMessage service_architecture_diagram() {
     	PromptMessage userPromptMessage = new PromptMessage();
     	userPromptMessage.setRole(Role.USER);
     	userPromptMessage.setContent(new TextContent(
@@ -224,7 +224,7 @@ public class MCPServerContainers {
     }
 
     @Prompt(description = "Port Allocation Overview")
-    public PromptMessage port_allocation_overview() {
+    PromptMessage port_allocation_overview() {
     	PromptMessage userPromptMessage = new PromptMessage();
     	userPromptMessage.setRole(Role.USER);
     	userPromptMessage.setContent(new TextContent(

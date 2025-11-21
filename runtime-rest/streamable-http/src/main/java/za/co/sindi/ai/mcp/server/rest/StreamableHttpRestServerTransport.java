@@ -313,7 +313,6 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 						streamMapping.remove(streamId);
 					}
 				}
-				
 			});
 			//So, we have hasRequests
 			
