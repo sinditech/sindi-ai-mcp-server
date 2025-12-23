@@ -10,6 +10,8 @@
 	</parent>
 	<artifactId>sindi-ai-mcp-server-runtime-rest</artifactId>
 	<packaging>pom</packaging>
+	<name>Sindi AI MCP Server RESTful Runtime</name>
+	<description>The Model Context Protocol Server Runtime running purely on Jakarta REST.</description>
 
 	<modules>
 		<module>base</module>

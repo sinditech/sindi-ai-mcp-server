@@ -8,6 +8,8 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>sindi-ai-mcp-server-runtime-rest-base</artifactId>
+	<name>Sindi AI MCP Server RESTful Runtime - Base reference implementations</name>
+	<description>The Model Context Protocol RESTful Base reference implementation in Java</description>
 
 	<dependencies>
 		<dependency>

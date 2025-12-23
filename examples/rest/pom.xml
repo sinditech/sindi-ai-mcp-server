@@ -9,6 +9,8 @@
 	</parent>
 	<artifactId>sindi-ai-mcp-server-rest</artifactId>
 	<packaging>war</packaging>
+	<name>Sindi AI MCP Server Examples - REST</name>
+	<description>The Model Context Protocol Server examples running strictly using Jakarta REST.</description>
 	
 	<dependencies>
 		<dependency>

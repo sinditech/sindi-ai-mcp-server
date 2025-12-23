@@ -10,6 +10,8 @@
 	</parent>
 	<artifactId>sindi-ai-mcp-server-runtime-servlet</artifactId>
 	<packaging>pom</packaging>
+	<name>Sindi AI MCP Server Servlet Runtime</name>
+	<description>The Model Context Protocol Server Runtime running purely on Jakarta Servlet.</description>
 
 	<modules>
 		<module>sse</module>

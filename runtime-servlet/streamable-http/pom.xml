@@ -8,6 +8,8 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>sindi-ai-mcp-server-runtime-servlet-streamable-http</artifactId>
+	<name>Sindi AI MCP Server Servlet Runtime - Streamable HTTP</name>
+	<description>The Model Context Protocol Streamable HTTP implementation in Java</description>
 
 	<dependencies>
 		<dependency>

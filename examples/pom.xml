@@ -10,6 +10,8 @@
 	</parent>
 	<artifactId>sindi-ai-mcp-server-examples</artifactId>
 	<packaging>pom</packaging>
+	<name>Sindi AI MCP Server Examples</name>
+	<description>The Model Context Protocol Server examples</description>
 
 	<modules>
 		<module>rest</module>

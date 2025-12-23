@@ -15,7 +15,7 @@ public class DefaultBeanInstance extends AbstractBeanInstance {
 	private final Object instance;
 	
 	/**
-	 * @param instance
+	 * @param instanceType
 	 */
 	public DefaultBeanInstance(Class<?> instanceType) throws ReflectiveOperationException{
 		this(instanceType, instanceType.getDeclaredConstructor().newInstance());

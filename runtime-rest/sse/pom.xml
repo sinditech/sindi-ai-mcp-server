@@ -8,6 +8,8 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>sindi-ai-mcp-server-runtime-rest-sse</artifactId>
+	<name>Sindi AI MCP Server RESTful Runtime - SSE</name>
+	<description>The Model Context Protocol SSE transport implementation in Java</description>
 
 	<dependencies>
 		<dependency>
