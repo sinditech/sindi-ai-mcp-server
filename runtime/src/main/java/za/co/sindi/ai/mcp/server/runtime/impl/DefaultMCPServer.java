@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import za.co.sindi.ai.mcp.schema.CallToolRequest;
 import za.co.sindi.ai.mcp.schema.CallToolResult;
+import za.co.sindi.ai.mcp.schema.CancelledNotification;
 import za.co.sindi.ai.mcp.schema.ErrorCodes;
 import za.co.sindi.ai.mcp.schema.GetPromptRequest;
 import za.co.sindi.ai.mcp.schema.GetPromptResult;
@@ -29,7 +30,6 @@ import za.co.sindi.ai.mcp.schema.Resource;
 import za.co.sindi.ai.mcp.schema.ResourceTemplate;
 import za.co.sindi.ai.mcp.schema.ServerCapabilities;
 import za.co.sindi.ai.mcp.schema.Tool;
-import za.co.sindi.ai.mcp.server.MCPSession;
 import za.co.sindi.ai.mcp.server.RegisteredPrompt;
 import za.co.sindi.ai.mcp.server.RegisteredResource;
 import za.co.sindi.ai.mcp.server.RegisteredResourceTemplate;
@@ -37,6 +37,7 @@ import za.co.sindi.ai.mcp.server.RegisteredTool;
 import za.co.sindi.ai.mcp.server.Server;
 import za.co.sindi.ai.mcp.server.runtime.FeatureDefinitionManager;
 import za.co.sindi.ai.mcp.server.runtime.MCPServer;
+import za.co.sindi.ai.mcp.server.runtime.MCPSession;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
 import za.co.sindi.ai.mcp.shared.MCPError;
 import za.co.sindi.ai.mcp.shared.RequestHandler;
@@ -161,6 +162,7 @@ public class DefaultMCPServer implements MCPServer {
 		if (server.getCapabilities().getLogging() != null) {
 //			server.addRequestHandler(SetLevelRequest.METHOD_LOGGING_SETLEVEL, setLoggingLevelRequestHandler(server));
 			server.addNotificationHandler(LoggingMessageNotification.METHOD_NOTIFICATION_LOGGING_MESSAGE, notification -> {});
+			server.addNotificationHandler(CancelledNotification.METHOD_NOTIFICATION_CANCELLED, new CancellationNotificationHandler());
 		}
 		
 		if (server.getCapabilities().getPrompts() != null) {

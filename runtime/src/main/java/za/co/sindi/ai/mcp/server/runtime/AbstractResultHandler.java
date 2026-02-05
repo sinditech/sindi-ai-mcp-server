@@ -9,6 +9,7 @@ import za.co.sindi.ai.mcp.schema.Request;
 import za.co.sindi.ai.mcp.schema.Result;
 import za.co.sindi.ai.mcp.server.exception.MCPException;
 import za.co.sindi.ai.mcp.server.runtime.exception.FeatureExecutionException;
+import za.co.sindi.ai.mcp.server.spi.MCPContext;
 import za.co.sindi.ai.mcp.shared.RequestHandler;
 import za.co.sindi.ai.mcp.shared.RequestHandlerExtra;
 
@@ -35,6 +36,7 @@ public abstract class AbstractResultHandler<REQ extends Request, RES extends Res
 		Throwable throwable = null;
 		
 		try {
+			registerRequest(extra);
 			value = executor.invoke(MCPSchema.toRequest(request));
 		} catch (Throwable e) {
 			if (e instanceof FeatureExecutionException fee)	throw fee;
@@ -42,7 +44,20 @@ public abstract class AbstractResultHandler<REQ extends Request, RES extends Res
 			
 			throwable = e;
 		}
-		return generateResult(value, throwable);
+		
+		try {
+			return generateResult(value, throwable);
+		} finally {
+			releaseRequest(extra);
+		}
+	}
+	
+	private void registerRequest(final RequestHandlerExtra extra) {
+		MCPContext.getCurrentInstance().setCurrentRequest(extra.getRequestId(), extra.getMeta());
+	}
+	
+	private void releaseRequest(final RequestHandlerExtra extra) {
+		MCPContext.getCurrentInstance().setCurrentRequest(null, null);
 	}
 
 	protected abstract RES generateResult(final Object value, Throwable throwable);

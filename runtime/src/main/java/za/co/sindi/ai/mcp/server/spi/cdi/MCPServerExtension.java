@@ -43,6 +43,7 @@ public class MCPServerExtension implements Extension {
 		afterBeanDiscovery.addBean(new EventStoreProducer());
 		afterBeanDiscovery.addBean(new MCPContextFactoryProducer(new DefaultMCPContextFactory()));
 		afterBeanDiscovery.addBean(new MCPContextProducer());
+		afterBeanDiscovery.addBean(new ElicitationContextProducer());
 		afterBeanDiscovery.addBean(new MCPLoggerProducer());
 		afterBeanDiscovery.addBean(new PromptManagerProducer());
 		afterBeanDiscovery.addBean(new ResourceManagerProducer());
@@ -51,5 +52,7 @@ public class MCPServerExtension implements Extension {
 		afterBeanDiscovery.addBean(new SessionIdGeneratorProducer(() -> UUID.randomUUID().toString()));
 		afterBeanDiscovery.addBean(new SessionManagerProducer());
 		afterBeanDiscovery.addBean(new ToolManagerProducer());
+		afterBeanDiscovery.addBean(new CancellationContextProducer());
+		afterBeanDiscovery.addBean(new ProgressContextProducer());
 	}
 }

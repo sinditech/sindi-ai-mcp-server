@@ -74,8 +74,8 @@
 		<dependencies>
 			<dependency>
 				<groupId>za.co.sindi</groupId>
-				<artifactId>sindi-ai-mcp</artifactId>
-				<version>0.0.1</version>
+				<artifactId>sindi-ai-mcp-server-core</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 			
 			<dependency>

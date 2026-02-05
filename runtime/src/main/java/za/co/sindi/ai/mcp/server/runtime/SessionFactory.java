@@ -3,7 +3,6 @@
  */
 package za.co.sindi.ai.mcp.server.runtime;
 
-import za.co.sindi.ai.mcp.server.MCPSession;
 import za.co.sindi.ai.mcp.shared.ServerTransport;
 
 /**

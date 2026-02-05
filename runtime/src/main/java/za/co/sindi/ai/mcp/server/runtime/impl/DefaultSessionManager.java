@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import za.co.sindi.ai.mcp.server.MCPSession;
+import za.co.sindi.ai.mcp.server.runtime.MCPSession;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
 import za.co.sindi.commons.utils.Preconditions;
 import za.co.sindi.commons.utils.Strings;

@@ -25,15 +25,13 @@ import za.co.sindi.ai.mcp.schema.JSONRPCVersion;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
 import za.co.sindi.ai.mcp.schema.ProtocolVersion;
 import za.co.sindi.ai.mcp.server.EventStore;
-import za.co.sindi.ai.mcp.server.MCPSession;
 import za.co.sindi.ai.mcp.server.Server;
-import za.co.sindi.ai.mcp.server.runtime.MCPContextFactory;
-import za.co.sindi.ai.mcp.server.runtime.MCPServer;
+import za.co.sindi.ai.mcp.server.runtime.MCPSession;
 import za.co.sindi.ai.mcp.server.runtime.SessionFactory;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
+import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPContext;
 import za.co.sindi.ai.mcp.server.runtime.streamable.SessionIdGenerator;
 import za.co.sindi.ai.mcp.server.spi.MCPContext;
-import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
 import za.co.sindi.commons.utils.Strings;
 
 /**
@@ -68,17 +66,17 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 	@Inject
 	private EventStore eventStore;
 	
-	@Inject
-	private MCPContextFactory mcpContextFactory;
+//	@Inject
+//	private MCPContextFactory mcpContextFactory;
 	
 	@Inject
 	private SessionFactory sessionFactory;
 	
-	@Inject
-	private MCPServerConfig mcpServerConfig;
+//	@Inject
+//	private MCPServerConfig mcpServerConfig;
 	
-	@Inject
-	private MCPServer mcpServer;
+//	@Inject
+//	private MCPServer mcpServer;
 	
 	@Resource
 	private ManagedExecutorService managedExecutorService;
@@ -90,9 +88,9 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 	}
 	
 	@Override
-	public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-        String requestMethod = request.getMethod();
+		String requestMethod = request.getMethod();
         if (!ALLOWED_HTTP_METHODS.contains(requestMethod)) {
         	writeResponse(response, HttpServletResponse.SC_METHOD_NOT_ALLOWED, createJSONRPCError(ErrorCodes.CONNECTION_CLOSED, "Method not allowed."));
 //        	response.sendError(HttpServletResponse.SC_BAD_REQUEST, "HTTP request method '" + requestMethod + "' is not supported.");
@@ -124,7 +122,8 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 			return ;
 		}
 		
-		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+//		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+		((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);
 		StreamableHTTPServerTransport serverTransport = (StreamableHTTPServerTransport) session.getTransport();
 		serverTransport.handleHttpGetRequest(request, response);
 	}
@@ -156,9 +155,10 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 			transport = (StreamableHTTPServerTransport) sessionHolder[0].getTransport();
 //			transport.setRequestTimeout(thisServer.getRequestTimeout());
 			transport.setExecutor(managedExecutorService);
+//			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, sessionHolder[0]);
+			((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(sessionHolder[0]);
 			
 			if (sessionHolder[0] instanceof Server server) server.connect();
-			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, sessionHolder[0]);
 		} else {
 			MCPSession session = sessionManager.getSession(sessionId);
 			if (session == null) {
@@ -166,8 +166,9 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 				return ;
 			}
 			
+			((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);
+//			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
 			transport = (StreamableHTTPServerTransport) session.getTransport();
-			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
 		}
 		
 		if (transport != null) transport.handleHttpPostRequest(request, response);
@@ -187,8 +188,7 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 		
 		session.closeQuietly();
 		sessionManager.removeSession(sessionIdOptional.get());
-		MCPContext mcpContext = MCPContext.getCurrentInstance();
-		if (mcpContext != null) mcpContext.release();
+		((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(null);
 		writeResponse(response, HttpServletResponse.SC_OK, TEXT_PLAIN, "OK");
 	}
 	

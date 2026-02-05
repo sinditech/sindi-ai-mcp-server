@@ -27,7 +27,7 @@ public class BeanDefinition implements Serializable {
 	 * @param tools
 	 * @param prompts
 	 */
-	public BeanDefinition(/*Class<?> beanClass, Object instance*/BeanInstance beanInstance, List<ResourceDefinition> resources, List<ResourceTemplatesDefinition> resourceTemplates, List<ToolDefinition> tools,	List<PromptDefinition> prompts) {
+	public BeanDefinition(/*Class<?> beanClass, Object instance*/BeanInstance beanInstance, List<ResourceDefinition> resources, List<ResourceTemplatesDefinition> resourceTemplates, List<ToolDefinition> tools, List<PromptDefinition> prompts) {
 		super();
 //		this.beanClass = beanClass;
 //		this.instance = instance;

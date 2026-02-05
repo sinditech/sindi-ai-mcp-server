@@ -4,7 +4,10 @@
 package za.co.sindi.ai.mcp.server.runtime;
 
 import java.io.Serializable;
+import java.util.List;
 
+import za.co.sindi.ai.mcp.schema.Annotations;
+import za.co.sindi.ai.mcp.schema.Icon;
 import za.co.sindi.ai.mcp.schema.ResourceTemplate;
 import za.co.sindi.commons.utils.Strings;
 
@@ -24,6 +27,9 @@ public class ResourceTemplatesDefinition implements FeatureDefinition<ResourceTe
 	private String annotationDescription;
 	private String annotationMimeType;
 	
+	private List<IconInfo> icons;
+	private AnnotationsInfo annotations;
+	
 	/**
 	 * @param methodDeclaringClass
 	 * @param methodName
@@ -33,9 +39,11 @@ public class ResourceTemplatesDefinition implements FeatureDefinition<ResourceTe
 	 * @param annotationTitle
 	 * @param annotationDescription
 	 * @param annotationMimeType
+	 * @param icons
+	 * @param annotations
 	 */
-	public ResourceTemplatesDefinition(Class<?> methodDeclaringClass, String methodName, Class<?> methodReturnType,
-			String annotationUriTemplate, String annotationName, String annotationTitle, String annotationDescription, String annotationMimeType) {
+	public ResourceTemplatesDefinition(Class<?> methodDeclaringClass, String methodName, Class<?> methodReturnType, String annotationUriTemplate, 
+			String annotationName, String annotationTitle, String annotationDescription, String annotationMimeType, List<IconInfo> icons, AnnotationsInfo annotations) {
 		super();
 		this.methodDeclaringClass = methodDeclaringClass;
 		this.methodName = methodName;
@@ -45,6 +53,8 @@ public class ResourceTemplatesDefinition implements FeatureDefinition<ResourceTe
 		this.annotationTitle = annotationTitle;
 		this.annotationDescription = annotationDescription;
 		this.annotationMimeType = annotationMimeType;
+		this.icons = icons;
+		this.annotations = annotations;
 	}
 
 	/**
@@ -103,6 +113,20 @@ public class ResourceTemplatesDefinition implements FeatureDefinition<ResourceTe
 		return annotationMimeType;
 	}
 
+	/**
+	 * @return the icons
+	 */
+	public List<IconInfo> getIcons() {
+		return icons;
+	}
+
+	/**
+	 * @return the annotations
+	 */
+	public AnnotationsInfo getAnnotations() {
+		return annotations;
+	}
+
 	@Override
 	public ResourceTemplate toMCPFeature() {
 		// TODO Auto-generated method stub
@@ -113,6 +137,15 @@ public class ResourceTemplatesDefinition implements FeatureDefinition<ResourceTe
 		resourceTemplate.setDescription(annotationDescription);
 		resourceTemplate.setMimeType(annotationMimeType);
 		resourceTemplate.setTitle(Strings.isNullOrEmpty(annotationTitle) ? null : annotationTitle);
+		
+		if (icons != null && !icons.isEmpty()) {
+			List<Icon> _icons = icons.stream().map(icon -> new Icon(Strings.isNullOrEmpty(icon.getSrc()) ? null : icon.getSrc(), Strings.isNullOrEmpty(icon.getMimeType()) ? null : icon.getMimeType(), icon.getSizes() == null || icon.getSizes().length == 0 ? null : icon.getSizes(), icon.getTheme())).toList();
+			resourceTemplate.setIcons(_icons.toArray(new Icon[_icons.size()]));
+		}
+		
+		if (annotations != null) {
+			resourceTemplate.setAnnotations(new Annotations(annotations.getAudience() == null || annotations.getAudience().length == 0 ? null : annotations.getAudience(), null, null));
+		}
 		
 		return resourceTemplate;
 	}

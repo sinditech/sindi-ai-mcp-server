@@ -3,7 +3,6 @@
  */
 package za.co.sindi.ai.mcp.server.runtime;
 
-import za.co.sindi.ai.mcp.server.MCPSession;
 import za.co.sindi.ai.mcp.server.spi.MCPContext;
 import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
 
@@ -13,5 +12,6 @@ import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
  */
 public interface MCPContextFactory {
 
-	public MCPContext getMCPContext(final MCPServerConfig serverConfig, final MCPServer mcpServer, final MCPSession session);
+	public MCPContext getMCPContext(final MCPServerConfig serverConfig, final MCPServer mcpServer/*, final MCPSession session */);
+	
 }

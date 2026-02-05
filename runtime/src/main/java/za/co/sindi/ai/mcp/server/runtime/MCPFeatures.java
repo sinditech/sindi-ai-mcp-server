@@ -7,11 +7,13 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import za.co.sindi.ai.mcp.server.runtime.PromptDefinition.PromptArgumentInfo;
+import za.co.sindi.ai.mcp.server.runtime.ToolDefinition.ToolAnnotationsInfo;
 import za.co.sindi.ai.mcp.server.runtime.ToolDefinition.ToolArgumentInfo;
 import za.co.sindi.ai.mcp.server.spi.Prompt;
 import za.co.sindi.ai.mcp.server.spi.PromptArgument;
@@ -20,6 +22,7 @@ import za.co.sindi.ai.mcp.server.spi.ResourceTemplate;
 import za.co.sindi.ai.mcp.server.spi.Tool;
 import za.co.sindi.ai.mcp.server.spi.ToolArgument;
 import za.co.sindi.commons.utils.Annotations;
+import za.co.sindi.commons.utils.Strings;
 
 /**
  * @author Buhake Sindi
@@ -100,7 +103,9 @@ public class MCPFeatures {
 		ToolDefinition toolDefinition = null;
 		Tool tool = method.getAnnotation(Tool.class);
 		if (tool != null) {
-			toolDefinition = new ToolDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), tool.name(), tool.title(), tool.description(), createToolArgumentInfo(method));
+			List<IconInfo> icons = tool.icons() == null ? null : Arrays.stream(tool.icons()).map(icon -> new IconInfo(icon.src(), icon.mimeType(), icon.sizes(), icon.theme())).toList();
+			ToolAnnotationsInfo annotations = tool.annotations() == null || Strings.isNullOrEmpty(tool.annotations().title()) ? null : new ToolAnnotationsInfo(tool.annotations().title(), tool.annotations().readOnlyHint(), tool.annotations().destructiveHint(), tool.annotations().idempotentHint(), tool.annotations().openWorldHint());
+			toolDefinition = new ToolDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), tool.name(), tool.title(), tool.description(), icons, annotations, createToolArgumentInfo(method));
 		}
 		return toolDefinition;
 	}
@@ -126,7 +131,7 @@ public class MCPFeatures {
 		if (LANGCHAIN4J_TOOL_ANNOTATION_CLASS != null) {
 			Annotation langchain4JTool = method.getAnnotation(LANGCHAIN4J_TOOL_ANNOTATION_CLASS);
 			if (langchain4JTool != null) {
-				toolDefinition = new ToolDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), Annotations.getAnnotationValue(langchain4JTool, "name"), null, Annotations.getAnnotationValue(langchain4JTool, "value"), createToolArgumentInfoFromLangChain4J(method));
+				toolDefinition = new ToolDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), Annotations.getAnnotationValue(langchain4JTool, "name"), null, Annotations.getAnnotationValue(langchain4JTool, "value"), null, null, createToolArgumentInfoFromLangChain4J(method));
 			}
 		}
 		return toolDefinition;
@@ -154,7 +159,8 @@ public class MCPFeatures {
 		PromptDefinition promptDefinition = null;
 		Prompt prompt = method.getAnnotation(Prompt.class);
 		if (prompt != null) {
-			promptDefinition = new PromptDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), prompt.name(), prompt.title(), prompt.description(), createPromptArgumenInfo(method));
+			List<IconInfo> icons = prompt.icons() == null || prompt.icons().length == 0 ? null : Arrays.stream(prompt.icons()).map(icon -> new IconInfo(icon.src(), icon.mimeType(), icon.sizes(), icon.theme())).toList();
+			promptDefinition = new PromptDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), prompt.name(), prompt.title(), prompt.description(), icons, createPromptArgumenInfo(method));
 		}
 		return promptDefinition;
 	}
@@ -179,7 +185,9 @@ public class MCPFeatures {
 		ResourceDefinition resourceDefinition = null;
 		Resource resource = method.getAnnotation(Resource.class);
 		if (resource != null) {
-			resourceDefinition = new ResourceDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), resource.uri(), resource.name(), resource.title(), resource.description(), resource.mimeType());
+			List<IconInfo> icons = resource.icons() == null || resource.icons().length == 0 ? null : Arrays.stream(resource.icons()).map(icon -> new IconInfo(icon.src(), icon.mimeType(), icon.sizes(), icon.theme())).toList();
+			AnnotationsInfo annotations = resource.annotations() == null || resource.annotations().audience().length == 0 ? null : new AnnotationsInfo(resource.annotations().audience());
+			resourceDefinition = new ResourceDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), resource.uri(), resource.name(), resource.title(), resource.description(), resource.mimeType(), icons, annotations);
 		}
 		return resourceDefinition;
 	}
@@ -188,7 +196,9 @@ public class MCPFeatures {
 		ResourceTemplatesDefinition resourceTemplatesDefinition = null;
 		ResourceTemplate resourceTemplate = method.getAnnotation(ResourceTemplate.class);
 		if (resourceTemplate != null) {
-			resourceTemplatesDefinition = new ResourceTemplatesDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), resourceTemplate.uri(), resourceTemplate.name(), resourceTemplate.title(), resourceTemplate.description(), resourceTemplate.mimeType());
+			List<IconInfo> icons = resourceTemplate.icons() == null || resourceTemplate.icons().length == 0 ? null : Arrays.stream(resourceTemplate.icons()).map(icon -> new IconInfo(icon.src(), icon.mimeType(), icon.sizes(), icon.theme())).toList();
+			AnnotationsInfo annotations = resourceTemplate.annotations() == null || resourceTemplate.annotations().audience().length == 0  ? null : new AnnotationsInfo(resourceTemplate.annotations().audience());
+			resourceTemplatesDefinition = new ResourceTemplatesDefinition(method.getDeclaringClass(), method.getName(), method.getReturnType(), resourceTemplate.uri(), resourceTemplate.name(), resourceTemplate.title(), resourceTemplate.description(), resourceTemplate.mimeType(), icons, annotations);
 		}
 		return resourceTemplatesDefinition;
 	}

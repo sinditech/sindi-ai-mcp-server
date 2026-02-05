@@ -3,8 +3,6 @@
  */
 package za.co.sindi.ai.mcp.server.runtime;
 
-import za.co.sindi.ai.mcp.server.MCPSession;
-
 /**
  * @author Buhake Sindi
  * @since 12 May 2025

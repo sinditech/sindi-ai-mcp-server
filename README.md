@@ -1,4 +1,4 @@
- sindi-ai-mcp-server
+# sindi-ai-mcp-server
 Java Implementation of Anthropic's Model Context Protocol (MCP) Server.
 
 This implementation is an attempt to provide an integration between the MCP protocol and Jakarta EE application in a seamless way.
@@ -27,7 +27,7 @@ With 2 runtimes implementations:
 
 ### 1. Add Dependencies
 
-You need to either select the servlet or REST runtime, within your application (but not both, as there might be an endpoint conflicts). 
+You need to either select the Servlet or REST runtime, within your application (but not both, as there might be an endpoint conflicts). 
 
 Add the required dependencies to your `pom.xml`.
 

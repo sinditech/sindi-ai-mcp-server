@@ -15,13 +15,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import za.co.sindi.ai.mcp.schema.MCPSchema;
-import za.co.sindi.ai.mcp.server.MCPSession;
 import za.co.sindi.ai.mcp.server.Server;
-import za.co.sindi.ai.mcp.server.runtime.MCPContextFactory;
-import za.co.sindi.ai.mcp.server.runtime.MCPServer;
+import za.co.sindi.ai.mcp.server.runtime.MCPSession;
 import za.co.sindi.ai.mcp.server.runtime.SessionFactory;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
-import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
+import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPContext;
+import za.co.sindi.ai.mcp.server.spi.MCPContext;
 import za.co.sindi.commons.utils.IOUtils;
 
 /**
@@ -50,25 +49,25 @@ public class SSEServerServlet extends HttpServlet /* implements MCPServerTranspo
 	@Inject
 	private SessionManager sessionManager;
 	
-	@Inject
-	private MCPContextFactory mcpContextFactory;
+//	@Inject
+//	private MCPContextFactory mcpContextFactory;
 	
 	@Inject
 	private SessionFactory sessionFactory;
 	
-	@Inject
-	private MCPServerConfig mcpServerConfig;
+//	@Inject
+//	private MCPServerConfig mcpServerConfig;
 	
-	@Inject
-	private MCPServer mcpServer;
+//	@Inject
+//	private MCPServer mcpServer;
 	
 	@Resource
 	private ManagedExecutorService managedExecutorService;
 
 	@Override
-	public void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-        String requestMethod = request.getMethod();
+		String requestMethod = request.getMethod();
         if (!ALLOWED_HTTP_METHODS.contains(requestMethod)) {
         	response.sendError(HttpServletResponse.SC_BAD_REQUEST, "HTTP request method '" + requestMethod + "' is not supported.");
         	return ;
@@ -117,9 +116,10 @@ public class SSEServerServlet extends HttpServlet /* implements MCPServerTranspo
 		sessionId = transport.getSessionId();
 		MCPSession session = sessionFactory.create(transport);
 		sessionManager.addSession(sessionId, session);
+//		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+		((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);
 		if (session instanceof Server server) server.connect();
 		LOGGER.info("Client Connected: " + sessionId);
-		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
 	}
 
 	/* (non-Javadoc)
@@ -148,7 +148,8 @@ public class SSEServerServlet extends HttpServlet /* implements MCPServerTranspo
 		
 		MCPSession session = sessionManager.getSession(sessionId);  // sessions.get(sessionId);
 		SSEHttpServletTransport serverTransport = (SSEHttpServletTransport) session.getTransport();
-		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+//		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+		((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);
 		
 		String contentBody = IOUtils.toString(request.getReader());
 		serverTransport.handleMessage(MCPSchema.deserializeJSONRPCMessage(contentBody));

@@ -7,7 +7,7 @@ import java.util.Iterator;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.spi.CreationalContext;
-import za.co.sindi.ai.mcp.server.MCPSession;
+import za.co.sindi.ai.mcp.server.runtime.MCPSession;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
 import za.co.sindi.ai.mcp.server.runtime.impl.DefaultSessionManager;
 import za.co.sindi.commons.utils.Strings;

@@ -9,8 +9,8 @@ import java.util.logging.Logger;
 
 import za.co.sindi.ai.mcp.schema.LoggingLevel;
 import za.co.sindi.ai.mcp.schema.LoggingMessageNotification.LoggingMessageNotificationParameters;
-import za.co.sindi.ai.mcp.server.MCPSession;
 import za.co.sindi.ai.mcp.server.Server;
+import za.co.sindi.ai.mcp.server.runtime.MCPSession;
 import za.co.sindi.ai.mcp.server.spi.MCPLogger;
 
 /**
@@ -41,9 +41,7 @@ public class DefaultMCPLogger implements MCPLogger {
 	public void send(LoggingLevel level, Object data) {
 		// TODO Auto-generated method stub
 		if (isLevelEnabled(level)) {
-			LoggingMessageNotificationParameters parameters = new LoggingMessageNotificationParameters();
-			parameters.setData(data);
-			parameters.setLevel(getLevel());
+			LoggingMessageNotificationParameters parameters = new LoggingMessageNotificationParameters(getLevel(), data);
 			parameters.setLogger(LOGGER.getName());
 			((Server)session).sendLoggingMessage(parameters);
 		}

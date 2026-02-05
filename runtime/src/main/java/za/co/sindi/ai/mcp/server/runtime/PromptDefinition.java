@@ -6,6 +6,7 @@ package za.co.sindi.ai.mcp.server.runtime;
 import java.io.Serializable;
 import java.util.List;
 
+import za.co.sindi.ai.mcp.schema.Icon;
 import za.co.sindi.ai.mcp.schema.Prompt;
 import za.co.sindi.ai.mcp.schema.PromptArgument;
 import za.co.sindi.commons.utils.Strings;
@@ -24,6 +25,7 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 	private String annotationTitle;
 	private String annotationDescription;
 	
+	private List<IconInfo> icons;	
 	private List<PromptArgumentInfo> arguments;
 	
 	/**
@@ -33,10 +35,11 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 	 * @param annotationName
 	 * @param annotationTitle
 	 * @param annotationDescription
+	 * @param icons
 	 * @param arguments
 	 */
 	public PromptDefinition(Class<?> methodDeclaringClass, String methodName, Class<?> methodReturnType,
-			String annotationName, String annotationTitle, String annotationDescription, List<PromptArgumentInfo> arguments) {
+			String annotationName, String annotationTitle, String annotationDescription, List<IconInfo> icons, List<PromptArgumentInfo> arguments) {
 		super();
 		this.methodDeclaringClass = methodDeclaringClass;
 		this.methodName = methodName;
@@ -44,6 +47,7 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 		this.annotationName = annotationName;
 		this.annotationTitle = annotationTitle;
 		this.annotationDescription = annotationDescription;
+		this.icons = icons;
 		this.arguments = arguments;
 	}
 
@@ -90,6 +94,13 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 	}
 
 	/**
+	 * @return the icons
+	 */
+	public List<IconInfo> getIcons() {
+		return icons;
+	}
+
+	/**
 	 * @return the arguments
 	 */
 	public List<PromptArgumentInfo> getArguments() {
@@ -103,6 +114,11 @@ public class PromptDefinition implements FeatureDefinition<Prompt>, Serializable
 		prompt.setName(Strings.isNullOrEmpty(annotationName) ? methodName : annotationName);
 		prompt.setTitle(Strings.isNullOrEmpty(annotationTitle) ? null : annotationTitle);
 		prompt.setDescription(annotationDescription);
+		
+		if (icons != null && !icons.isEmpty()) {
+			List<Icon> _icons = icons.stream().map(icon -> new Icon(Strings.isNullOrEmpty(icon.getSrc()) ? null : icon.getSrc(), Strings.isNullOrEmpty(icon.getMimeType()) ? null : icon.getMimeType(), icon.getSizes() == null || icon.getSizes().length == 0 ? null : icon.getSizes(), icon.getTheme())).toList();
+			prompt.setIcons(_icons.toArray(new Icon[_icons.size()]));
+		}
 		
 		if (arguments != null) {
 			List<PromptArgument> promptArguments = arguments.stream().map(argument -> {

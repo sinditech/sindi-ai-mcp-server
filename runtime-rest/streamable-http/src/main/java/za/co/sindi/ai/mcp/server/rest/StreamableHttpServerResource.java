@@ -35,15 +35,13 @@ import za.co.sindi.ai.mcp.schema.JSONRPCVersion;
 import za.co.sindi.ai.mcp.schema.ProtocolVersion;
 import za.co.sindi.ai.mcp.server.EventId;
 import za.co.sindi.ai.mcp.server.EventStore;
-import za.co.sindi.ai.mcp.server.MCPSession;
 import za.co.sindi.ai.mcp.server.Server;
-import za.co.sindi.ai.mcp.server.runtime.MCPContextFactory;
-import za.co.sindi.ai.mcp.server.runtime.MCPServer;
+import za.co.sindi.ai.mcp.server.runtime.MCPSession;
 import za.co.sindi.ai.mcp.server.runtime.SessionFactory;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
+import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPContext;
 import za.co.sindi.ai.mcp.server.runtime.streamable.SessionIdGenerator;
 import za.co.sindi.ai.mcp.server.spi.MCPContext;
-import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
 import za.co.sindi.commons.utils.Strings;
 
 /**
@@ -77,17 +75,17 @@ public class StreamableHttpServerResource {
 	@Inject
 	private SessionManager sessionManager;
 	
-	@Inject
-	private MCPContextFactory mcpContextFactory;
+//	@Inject
+//	private MCPContextFactory mcpContextFactory;
 	
 	@Inject
 	private SessionFactory sessionFactory;
 	
-	@Inject
-	private MCPServerConfig mcpServerConfig;
+//	@Inject
+//	private MCPServerConfig mcpServerConfig;
 	
-	@Inject
-	private MCPServer mcpServer;
+//	@Inject
+//	private MCPServer mcpServer;
 	
 	@Resource
 	private ManagedExecutorService managedExecutorService;
@@ -109,7 +107,8 @@ public class StreamableHttpServerResource {
 			throw new NotFoundException(toResponse(Status.NOT_FOUND, createJSONRPCError(ErrorCodes.REQUEST_TIMEOUT, "Session not found.")));
 		}
 		
-		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+//		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+		((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);
 		StreamableHttpRestServerTransport serverTransport = (StreamableHttpRestServerTransport) session.getTransport();
 		return serverTransport.handleHttpGetRequest(asyncResponse, Strings.isNullOrEmpty(lastEventId) ? null : EventId.of(lastEventId));
 	}
@@ -139,7 +138,8 @@ public class StreamableHttpServerResource {
 			transport.setExecutor(managedExecutorService);
 			
 			if (sessionHolder[0] instanceof Server server) server.connect();
-			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, sessionHolder[0]);
+//			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, sessionHolder[0]);
+			((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(sessionHolder[0]);
 		} else {
 			MCPSession session = sessionManager.getSession(mcpSessionId);
 			if (session == null) {
@@ -147,7 +147,8 @@ public class StreamableHttpServerResource {
 			}
 			
 			transport = (StreamableHttpRestServerTransport) session.getTransport();
-			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+//			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+			((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);
 		}
 		
 		asyncResponse.setTimeoutHandler(null);

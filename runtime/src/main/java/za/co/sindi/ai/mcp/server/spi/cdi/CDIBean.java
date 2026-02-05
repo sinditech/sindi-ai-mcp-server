@@ -27,7 +27,7 @@ import jakarta.enterprise.inject.spi.PassivationCapable;
 abstract class CDIBean<T> implements Bean<T>, PassivationCapable, Serializable {
 
 	private Set<Type> types;
-	private Set<Annotation> qualifiers = Set.of(new Default.Literal(), new Any.Literal());
+	private Set<Annotation> qualifiers = Set.of(Default.Literal.INSTANCE, Any.Literal.INSTANCE);
 	private Class<? extends Annotation> scope = Dependent.class;
 	private String name;
 	private Set<Class<? extends Annotation>> stereotypes = Collections.emptySet();

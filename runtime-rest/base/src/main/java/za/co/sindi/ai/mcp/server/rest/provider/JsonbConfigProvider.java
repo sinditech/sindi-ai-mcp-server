@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.ext.ContextResolver;
 import jakarta.ws.rs.ext.Provider;
 import za.co.sindi.ai.mcp.mapper.JsonCursorSerialization;
+import za.co.sindi.ai.mcp.mapper.JsonElicitActionAdapter;
 import za.co.sindi.ai.mcp.mapper.JsonIncludeContextAdapter;
 import za.co.sindi.ai.mcp.mapper.JsonJSONRPCVersionAdapter;
 import za.co.sindi.ai.mcp.mapper.JsonLoggingLevelAdapter;
@@ -41,7 +42,8 @@ public class JsonbConfigProvider implements ContextResolver<Jsonb> {
 											new JsonLoggingLevelAdapter(),
 											new JsonRoleAdapter(),
 											new JsonProtocolVersionAdapter(),
-											new JsonStringSchemaFormatAdapter())
+											new JsonStringSchemaFormatAdapter(),
+											new JsonElicitActionAdapter())
 								  .withSerializers(new JsonCursorSerialization(), new JsonRequestIdSerialization(), new JsonProgressTokenSerialization())
 								  .withDeserializers(new JsonCursorSerialization(), new JsonRequestIdSerialization(), new JsonProgressTokenSerialization());
 		this.jsonb = JsonbBuilder.create(config);

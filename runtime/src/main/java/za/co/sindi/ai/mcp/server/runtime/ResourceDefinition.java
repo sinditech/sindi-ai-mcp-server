@@ -4,7 +4,10 @@
 package za.co.sindi.ai.mcp.server.runtime;
 
 import java.io.Serializable;
+import java.util.List;
 
+import za.co.sindi.ai.mcp.schema.Annotations;
+import za.co.sindi.ai.mcp.schema.Icon;
 import za.co.sindi.ai.mcp.schema.Resource;
 import za.co.sindi.commons.utils.Strings;
 
@@ -24,6 +27,9 @@ public class ResourceDefinition implements FeatureDefinition<Resource>, Serializ
 	private String annotationDescription;
 	private String annotationMimeType;
 	
+	private List<IconInfo> icons;
+	private AnnotationsInfo annotations;
+	
 	/**
 	 * @param methodDeclaringClass
 	 * @param methodName
@@ -33,9 +39,11 @@ public class ResourceDefinition implements FeatureDefinition<Resource>, Serializ
 	 * @param annotationTitle
 	 * @param annotationDescription
 	 * @param annotationMimeType
+	 * @param icons;
+	 * @param annotations
 	 */
-	public ResourceDefinition(Class<?> methodDeclaringClass, String methodName, Class<?> methodReturnType,
-			String annotationUri, String annotationName, String annotationTitle, String annotationDescription, String annotationMimeType) {
+	public ResourceDefinition(Class<?> methodDeclaringClass, String methodName, Class<?> methodReturnType, String annotationUri, 
+			String annotationName, String annotationTitle, String annotationDescription, String annotationMimeType, List<IconInfo> icons, AnnotationsInfo annotations) {
 		super();
 		this.methodDeclaringClass = methodDeclaringClass;
 		this.methodName = methodName;
@@ -45,6 +53,8 @@ public class ResourceDefinition implements FeatureDefinition<Resource>, Serializ
 		this.annotationTitle = annotationTitle;
 		this.annotationDescription = annotationDescription;
 		this.annotationMimeType = annotationMimeType;
+		this.icons = icons;
+		this.annotations = annotations;
 	}
 
 	/**
@@ -103,6 +113,20 @@ public class ResourceDefinition implements FeatureDefinition<Resource>, Serializ
 		return annotationMimeType;
 	}
 	
+	/**
+	 * @return the icons
+	 */
+	public List<IconInfo> getIcons() {
+		return icons;
+	}
+
+	/**
+	 * @return the annotations
+	 */
+	public AnnotationsInfo getAnnotations() {
+		return annotations;
+	}
+
 	@Override
 	public Resource toMCPFeature() {
 		// TODO Auto-generated method stub
@@ -113,6 +137,15 @@ public class ResourceDefinition implements FeatureDefinition<Resource>, Serializ
 		resource.setDescription(annotationDescription);
 		resource.setMimeType(annotationMimeType);
 		resource.setTitle(Strings.isNullOrEmpty(annotationTitle) ? null : annotationTitle);
+		
+		if (icons != null && !icons.isEmpty()) {
+			List<Icon> _icons = icons.stream().map(icon -> new Icon(Strings.isNullOrEmpty(icon.getSrc()) ? null : icon.getSrc(), Strings.isNullOrEmpty(icon.getMimeType()) ? null : icon.getMimeType(), icon.getSizes() == null || icon.getSizes().length == 0 ? null : icon.getSizes(), icon.getTheme())).toList();
+			resource.setIcons(_icons.toArray(new Icon[_icons.size()]));
+		}
+		
+		if (annotations != null) {
+			resource.setAnnotations(new Annotations(annotations.getAudience() == null || annotations.getAudience().length == 0 ? null : annotations.getAudience(), null, null));
+		}
 		
 		return resource;
 	}

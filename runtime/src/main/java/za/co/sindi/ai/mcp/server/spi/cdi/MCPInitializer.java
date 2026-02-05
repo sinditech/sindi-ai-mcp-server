@@ -21,12 +21,13 @@ import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletContext;
-import za.co.sindi.ai.mcp.server.MCPSession;
 import za.co.sindi.ai.mcp.server.runtime.BeanDefinitionRegistry;
 import za.co.sindi.ai.mcp.server.runtime.BeanInstance;
 import za.co.sindi.ai.mcp.server.runtime.FeatureDefinitionManager;
+import za.co.sindi.ai.mcp.server.runtime.MCPContextFactory;
 import za.co.sindi.ai.mcp.server.runtime.MCPFeatures;
 import za.co.sindi.ai.mcp.server.runtime.MCPServer;
+import za.co.sindi.ai.mcp.server.runtime.MCPSession;
 import za.co.sindi.ai.mcp.server.runtime.SessionFactory;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
 import za.co.sindi.ai.mcp.server.runtime.impl.ContextualBeanInstance;
@@ -60,6 +61,9 @@ public class MCPInitializer {
 	
 	@Inject
 	private MCPServerConfig mcpServerConfig;
+	
+	@Inject
+	private MCPContextFactory mcpContextFactory;
 	
 	@Inject
 	private SessionManager sessionManager;
@@ -107,6 +111,9 @@ public class MCPInitializer {
 				});
 				return session;
 			};
+			
+			//Setup context
+			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer);
 		} catch (IOException | ScanningException e) {
 			// TODO Auto-generated catch block
 			throw new RuntimeException(e);

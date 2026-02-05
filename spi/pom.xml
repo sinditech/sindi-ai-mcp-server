@@ -23,8 +23,12 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>jakarta.platform</groupId>
+			<artifactId>jakarta.jakartaee-api</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>za.co.sindi</groupId>
-			<artifactId>sindi-ai-mcp</artifactId>
+			<artifactId>sindi-ai-mcp-server-core</artifactId>
 		</dependency>
 	</dependencies>
 </project>

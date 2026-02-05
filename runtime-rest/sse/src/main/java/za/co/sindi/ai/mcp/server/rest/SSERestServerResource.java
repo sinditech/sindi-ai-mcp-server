@@ -19,13 +19,12 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.sse.Sse;
 import jakarta.ws.rs.sse.SseEventSink;
 import za.co.sindi.ai.mcp.schema.JSONRPCMessage;
-import za.co.sindi.ai.mcp.server.MCPSession;
 import za.co.sindi.ai.mcp.server.Server;
-import za.co.sindi.ai.mcp.server.runtime.MCPContextFactory;
-import za.co.sindi.ai.mcp.server.runtime.MCPServer;
+import za.co.sindi.ai.mcp.server.runtime.MCPSession;
 import za.co.sindi.ai.mcp.server.runtime.SessionFactory;
 import za.co.sindi.ai.mcp.server.runtime.SessionManager;
-import za.co.sindi.ai.mcp.server.spi.MCPServerConfig;
+import za.co.sindi.ai.mcp.server.runtime.impl.DefaultMCPContext;
+import za.co.sindi.ai.mcp.server.spi.MCPContext;
 
 /**
  * @author Buhake Sindi
@@ -49,17 +48,17 @@ public class SSERestServerResource {
 	@Inject
 	private SessionManager sessionManager;
 	
-	@Inject
-	private MCPContextFactory mcpContextFactory;
+//	@Inject
+//	private MCPContextFactory mcpContextFactory;
 	
 	@Inject
 	private SessionFactory sessionFactory;
 	
-	@Inject
-	private MCPServerConfig mcpServerConfig;
+//	@Inject
+//	private MCPServerConfig mcpServerConfig;
 	
-	@Inject
-	private MCPServer mcpServer;
+//	@Inject
+//	private MCPServer mcpServer;
 	
 	@Resource
 	private ManagedExecutorService managedExecutorService;
@@ -77,7 +76,8 @@ public class SSERestServerResource {
 		sessionManager.addSession(sessionId, session);
 		if (session instanceof Server server) server.connect();
 		LOGGER.info("Client Connected: " + sessionId);
-		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+//		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+		((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);
 	}
 	
 	@POST
@@ -89,7 +89,8 @@ public class SSERestServerResource {
 		}
 		
 		MCPSession session = sessionManager.getSession(sessionId);
-		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+//		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
+		((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);
 		SSERestServerTransport serverTransport = (SSERestServerTransport) session.getTransport();
 		serverTransport.handleMessage(message);
 		return Response.accepted("Accepted").build();

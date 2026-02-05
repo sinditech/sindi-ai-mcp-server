@@ -100,7 +100,7 @@ public class StreamableHttpRestServerTransport extends AbstractTransport impleme
 		streamMapping.entrySet().stream().forEach(entry -> {
 			AsyncResponse asyncResponse = entry.getValue();
 			if (!asyncResponse.isDone()) asyncResponse.cancel();
-			LOGGER.info("[streaming ID ="+ entry.getKey().toString() +"] cancelled.");
+			LOGGER.info("[Streaming ID ="+ entry.getKey().toString() +"] cancelled.");
 		});
 		streamMapping.clear();
 		

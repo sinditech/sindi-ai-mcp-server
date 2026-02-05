@@ -16,9 +16,37 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Prompt {
 	
+	/**
+	 * Human-readable name of the prompt.
+	 */
 	String name() default "";
 	
+	/**
+	 * Human-readable title of the prompt.
+	 * 
+	 * <p />If not provided, the name should be used for display.
+	 */
 	String title() default "";
 	
+	/**
+	 * An optional description of what this prompt provides
+	 */
 	String description() default "";
+	
+	/**
+     * Optional set of sized icons that the client can display in a user interface.<p />
+     *
+     * Clients that support rendering icons MUST support at least the following MIME types:
+     * <pre>
+     * - `image/png` - PNG images (safe, universal compatibility)
+     * - `image/jpeg` (and `image/jpg`) - JPEG images (safe, universal compatibility)
+     * </pre>
+     *
+     * Clients that support rendering icons SHOULD also support:
+     * <pre>
+     * - `image/svg+xml` - SVG images (scalable but requires security precautions)
+     * - `image/webp` - WebP images (modern, efficient format)
+     * </pre>
+     */
+	Icon[] icons() default {};
 }
