@@ -154,11 +154,14 @@ public class StreamableHTTPServerServlet extends HttpServlet /* implements MCPSe
 			
 			transport = (StreamableHTTPServerTransport) sessionHolder[0].getTransport();
 //			transport.setRequestTimeout(thisServer.getRequestTimeout());
-			transport.setExecutor(managedExecutorService);
+//			transport.setExecutor(managedExecutorService);
 //			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, sessionHolder[0]);
 			((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(sessionHolder[0]);
 			
-			if (sessionHolder[0] instanceof Server server) server.connect();
+			if (sessionHolder[0] instanceof Server server) {
+				server.setExecutor(managedExecutorService);
+				server.connect();
+			}
 		} else {
 			MCPSession session = sessionManager.getSession(sessionId);
 			if (session == null) {

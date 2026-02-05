@@ -112,13 +112,16 @@ public class SSEServerServlet extends HttpServlet /* implements MCPServerTranspo
 
 		SSEHttpServletTransport transport = new SSEHttpServletTransport(DEFAULT_MESSAGE_ENDPOINT, DEFAULT_SESSIONID_PARAMETER_NAME, asyncContext);
 //		transport.setRequestTimeout(thisServer.getRequestTimeout());
-		transport.setExecutor(managedExecutorService);
+//		transport.setExecutor(managedExecutorService);
 		sessionId = transport.getSessionId();
 		MCPSession session = sessionFactory.create(transport);
 		sessionManager.addSession(sessionId, session);
 //		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
 		((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);
-		if (session instanceof Server server) server.connect();
+		if (session instanceof Server server) {
+			server.setExecutor(managedExecutorService);
+			server.connect();
+		}
 		LOGGER.info("Client Connected: " + sessionId);
 	}
 

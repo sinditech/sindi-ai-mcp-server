@@ -74,7 +74,10 @@ public class SSERestServerResource {
 		String sessionId = transport.getSessionId();
 		MCPSession session = sessionFactory.create(transport);
 		sessionManager.addSession(sessionId, session);
-		if (session instanceof Server server) server.connect();
+		if (session instanceof Server server) {
+			server.setExecutor(managedExecutorService);
+			server.connect();
+		}
 		LOGGER.info("Client Connected: " + sessionId);
 //		mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, session);
 		((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(session);

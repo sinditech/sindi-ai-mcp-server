@@ -135,9 +135,12 @@ public class StreamableHttpServerResource {
 			
 			transport = (StreamableHttpRestServerTransport) sessionHolder[0].getTransport();
 //			transport.setRequestTimeout(thisServer.getRequestTimeout());
-			transport.setExecutor(managedExecutorService);
+//			transport.setExecutor(managedExecutorService);
 			
-			if (sessionHolder[0] instanceof Server server) server.connect();
+			if (sessionHolder[0] instanceof Server server) {
+				server.setExecutor(managedExecutorService);
+				server.connect();
+			}
 //			mcpContextFactory.getMCPContext(mcpServerConfig, mcpServer, sessionHolder[0]);
 			((DefaultMCPContext)MCPContext.getCurrentInstance()).setCurrentSession(sessionHolder[0]);
 		} else {
