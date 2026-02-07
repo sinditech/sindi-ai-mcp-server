@@ -10,7 +10,6 @@ import java.lang.annotation.Retention;
 
 import za.co.sindi.ai.mcp.schema.Role;
 
-
 /**
  * @author Buhake Sindi
  * @since 11 January 2026
@@ -18,6 +17,7 @@ import za.co.sindi.ai.mcp.schema.Role;
 @Documented
 @Retention(RUNTIME)
 public @interface Annotations {
+	
 	/**
      * Describes who the intended audience of this object or data is.
      *

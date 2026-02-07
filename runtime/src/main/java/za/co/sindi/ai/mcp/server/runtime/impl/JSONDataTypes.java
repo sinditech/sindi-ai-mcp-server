@@ -44,7 +44,7 @@ public class JSONDataTypes {
 	public static String deterimineJsonType(final Class<?> clazz) {
 		if (clazz == null) return "null";
 		
-		final Class<?> type = clazz.isArray() ? Collection.class : clazz.isPrimitive() ? Primitives.wrap(clazz) : clazz ;
+		final Class<?> type = clazz.isArray() ? Collection.class : clazz.isPrimitive() ? Primitives.wrap(clazz) : clazz;
 		Optional<String> jsonType = JAVA_DATA_TYPES.entrySet().stream().filter(entry -> entry.getKey().isAssignableFrom(type)).map(Map.Entry::getValue).findFirst();
 		return jsonType.orElseThrow(() -> new IllegalArgumentException("Could not map type '" + clazz + "' to a respective JSON type."));
 	}
